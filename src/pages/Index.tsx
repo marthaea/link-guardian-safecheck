@@ -8,6 +8,8 @@ import Footer from '@/components/Footer';
 import { checkLink } from '@/utils/linkChecker';
 import { Shield, Mail, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,9 +22,21 @@ const Index = () => {
     try {
       const scanResult = await checkLink(link);
       setResult(scanResult);
+      
+      if (!scanResult.isSafe) {
+        toast({
+          title: scanResult.warningLevel === 'danger' ? 'Security Alert!' : 'Warning',
+          description: scanResult.threatDetails || 'This link may be unsafe. Please review the scan results.',
+          variant: scanResult.warningLevel === 'danger' ? 'destructive' : 'default',
+        });
+      }
     } catch (error) {
       console.error('Error scanning link:', error);
-      // Handle error
+      toast({
+        title: 'Error',
+        description: 'Failed to scan the link. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -30,6 +44,13 @@ const Index = () => {
   
   const handleReset = () => {
     setResult(null);
+  };
+
+  const scrollToCheck = () => {
+    const checkElement = document.getElementById('check-section');
+    if (checkElement) {
+      checkElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -51,7 +72,7 @@ const Index = () => {
               Protect yourself from phishing, malware, and scams.
             </p>
             
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-8" id="check-section">
               {!isLoading && !result ? (
                 <LinkForm onSubmit={handleSubmit} isLoading={isLoading} />
               ) : isLoading ? (
@@ -158,7 +179,7 @@ const Index = () => {
             </div>
             
             <div className="mt-12 text-center">
-              <Button size="lg">
+              <Button size="lg" onClick={scrollToCheck}>
                 <LinkIcon className="mr-2 h-4 w-4" />
                 Check a Link Now
               </Button>

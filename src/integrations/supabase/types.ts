@@ -199,6 +199,39 @@ export type Database = {
           },
         ]
       }
+      scan_results: {
+        Row: {
+          created_at: string
+          id: string
+          is_safe: boolean
+          threat_details: string | null
+          type: string
+          url: string
+          user_id: string | null
+          warning_level: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_safe: boolean
+          threat_details?: string | null
+          type: string
+          url: string
+          user_id?: string | null
+          warning_level?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_safe?: boolean
+          threat_details?: string | null
+          type?: string
+          url?: string
+          user_id?: string | null
+          warning_level?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

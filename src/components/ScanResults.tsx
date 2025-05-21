@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { AlertTriangle, Check, Link, Mail, ShieldAlert, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, Check, Link, Mail, ShieldAlert, ShieldCheck, X, ExternalLink } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 export type ScanResult = {
   url: string;
@@ -68,6 +69,25 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url).then(() => {
+      toast({
+        title: "Copied to clipboard",
+        description: "The URL has been copied to your clipboard.",
+      });
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+
+  const handleReport = () => {
+    toast({
+      title: "Report submitted",
+      description: "Thank you for helping to make the internet safer.",
+      variant: "destructive",
+    });
+  };
+
   return (
     <Card className={cn("w-full max-w-3xl border-2", getBorderColor())}>
       <CardHeader>
@@ -90,25 +110,42 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           
           <div className="pt-2">
             <div className="text-sm font-medium mb-1">Scanned Item:</div>
-            <div className="p-2 bg-muted rounded-md overflow-hidden text-ellipsis">
+            <div className="p-2 bg-muted rounded-md overflow-hidden text-ellipsis flex justify-between items-center">
               <code className="text-xs break-all">{url}</code>
+              <Button variant="ghost" size="sm" onClick={handleCopy} className="ml-2 shrink-0">
+                <Check className="h-3 w-3 mr-1" /> Copy
+              </Button>
             </div>
           </div>
           
           {threatDetails && (
             <div className="pt-2">
               <div className="text-sm font-medium mb-1">Details:</div>
-              <p className="text-sm text-muted-foreground">{threatDetails}</p>
+              <p className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">{threatDetails}</p>
             </div>
           )}
+
+          <div className="bg-slate-50 p-3 rounded-md">
+            <p className="text-xs text-muted-foreground">
+              {isSafe 
+                ? "Our scan did not detect any obvious security risks with this item."
+                : "This scan detected potential security concerns. Be cautious before proceeding."}
+            </p>
+          </div>
           
           <div className="pt-4 flex justify-end gap-2">
             <Button variant="outline" onClick={onReset}>
               Check Another
             </Button>
-            {warningLevel !== 'safe' && (
-              <Button variant="destructive">
+            {!isSafe && (
+              <Button variant="destructive" onClick={handleReport}>
                 Report Issue
+              </Button>
+            )}
+            {type === 'link' && isSafe && (
+              <Button>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Visit Site
               </Button>
             )}
           </div>
