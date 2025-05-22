@@ -1,8 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Link, Shield } from "lucide-react";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import BulkCheck from "./BulkCheck";
 
 const Header = () => {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   return (
     <header className="border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -30,10 +35,23 @@ const Header = () => {
               </li>
             </ul>
           </nav>
-          <Button size="sm" variant="outline">
-            <Link className="mr-2 h-4 w-4" />
-            Bulk Check
-          </Button>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Link className="mr-2 h-4 w-4" />
+                Bulk Check
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Bulk URL Checker</SheetTitle>
+                <SheetDescription>
+                  Check multiple URLs at once for security threats
+                </SheetDescription>
+              </SheetHeader>
+              <BulkCheck onClose={() => setIsSheetOpen(false)} />
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

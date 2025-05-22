@@ -87,6 +87,26 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
       variant: "destructive",
     });
   };
+  
+  const handleVisitSite = () => {
+    // Ensure URL has http:// or https:// prefix
+    let urlToVisit = url;
+    if (!/^https?:\/\//i.test(url)) {
+      urlToVisit = 'https://' + url;
+    }
+    
+    // Open in new tab with security features
+    window.open(
+      urlToVisit, 
+      '_blank', 
+      'noopener,noreferrer'
+    );
+    
+    toast({
+      title: "Opening website",
+      description: "The site is opening in a new tab.",
+    });
+  };
 
   return (
     <Card className={cn("w-full max-w-3xl border-2", getBorderColor())}>
@@ -143,7 +163,7 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
               </Button>
             )}
             {type === 'link' && isSafe && (
-              <Button>
+              <Button onClick={handleVisitSite}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Visit Site
               </Button>
