@@ -14,21 +14,26 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
+    console.log("Calling edge function to check link:", input);
+    
     // Call the edge function to check the link
     const response = await fetch(`${SUPABASE_PROJECT_URL}/functions/v1/check-link`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
+        'Authorization': `Bearer ${await supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
       },
       body: JSON.stringify({ input, userId }),
     });
     
     if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
+      const errorText = await response.text();
+      console.error(`API error (${response.status}):`, errorText);
+      throw new Error(`API returned ${response.status}: ${errorText}`);
     }
     
     const scanResult = await response.json();
+    console.log("Scan result:", scanResult);
     
     // Ensure animation plays for at least 2 seconds
     await ensureMinimumAnimationTime(startTime);
@@ -43,7 +48,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       url: input,
       isSafe: false,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: 'An error occurred while checking this link.',
+      threatDetails: `An error occurred while checking this link: ${error instanceof Error ? error.message : 'Unknown error'}`,
       warningLevel: 'warning',
       timestamp: new Date(),
     };

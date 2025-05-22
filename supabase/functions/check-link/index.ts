@@ -27,8 +27,12 @@ serve(async (req) => {
   }
 
   try {
-    // Extract API key from environment variables
+    // Extract API key from environment variables - this now uses the secret you've added
     const IPQS_API_KEY = Deno.env.get("IPQS_API_KEY");
+    
+    // Log to help with debugging
+    console.log("IPQS_API_KEY present:", Boolean(IPQS_API_KEY));
+    
     if (!IPQS_API_KEY) {
       throw new Error("API key not configured");
     }
@@ -109,9 +113,11 @@ serve(async (req) => {
       url.searchParams.append('strictness', '2');
       url.searchParams.append('fast', 'true');
 
+      console.log("Making request to IPQS API:", url.toString().replace(IPQS_API_KEY, '[REDACTED]'));
       const response = await fetch(url.toString());
       
       if (!response.ok) {
+        console.error(`IPQS API error: ${response.status} ${response.statusText}`);
         throw new Error(`IPQS API returned ${response.status}`);
       }
       
