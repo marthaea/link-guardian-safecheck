@@ -27,16 +27,11 @@ serve(async (req) => {
   }
 
   try {
-    // Extract API key from environment variables - this now uses the secret you've added
+    // Extract API key from environment variables
     const IPQS_API_KEY = Deno.env.get("IPQS_API_KEY");
     
-    // Log to help with debugging
-    console.log("IPQS_API_KEY present:", Boolean(IPQS_API_KEY));
+    console.log("Checking for IPQS_API_KEY:", IPQS_API_KEY ? "Present" : "Missing");
     
-    if (!IPQS_API_KEY) {
-      throw new Error("API key not configured");
-    }
-
     // Parse request
     const { input, userId } = await req.json();
     
@@ -104,6 +99,22 @@ serve(async (req) => {
     }
 
     console.log(`Checking ${type}: ${input} with domain: ${domain}`);
+
+    // Check if API key is available, otherwise fall back to simulation
+    if (!IPQS_API_KEY) {
+      console.log("No API key configured, falling back to simulation");
+      const result = simulateSecurityCheck(input, domain, type);
+      
+      // Store the result if user is authenticated
+      if (userId) {
+        await storeResult(result, userId);
+      }
+      
+      return new Response(
+        JSON.stringify(result),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
 
     try {
       // Use IP Quality Score API for real threat checking

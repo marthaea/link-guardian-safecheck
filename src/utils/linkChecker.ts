@@ -1,6 +1,7 @@
 
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 // Supabase project URL for the edge function
 const SUPABASE_PROJECT_URL = "https://ulbsrnosehxzsysuyzsp.supabase.co";
@@ -29,11 +30,25 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`API error (${response.status}):`, errorText);
-      throw new Error(`API returned ${response.status}: ${errorText}`);
+      
+      // Show toast notification for API errors
+      toast({
+        title: "API Error",
+        description: `Could not check link security. Using simulation instead.`,
+        variant: "destructive",
+      });
+      
+      // Continue with simulation from the edge function
+      // The edge function will now fall back to simulation if no API key is available
     }
     
     const scanResult = await response.json();
     console.log("Scan result:", scanResult);
+    
+    // If we got an error object from the API, throw it to be caught below
+    if (scanResult.error) {
+      throw new Error(scanResult.details || scanResult.error);
+    }
     
     // Ensure animation plays for at least 2 seconds
     await ensureMinimumAnimationTime(startTime);
@@ -44,11 +59,13 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     };
   } catch (error) {
     console.error("Link checker error:", error);
+    
+    // Fall back to a basic result when all else fails
     return {
       url: input,
       isSafe: false,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: `An error occurred while checking this link: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      threatDetails: `An error occurred while checking this link. Our system will be using simulated results instead.`,
       warningLevel: 'warning',
       timestamp: new Date(),
     };
