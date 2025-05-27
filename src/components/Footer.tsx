@@ -1,5 +1,6 @@
 
 import { Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -12,13 +13,13 @@ const Footer = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 md:gap-8 items-center text-sm text-cyan-100/80">
-            <a href="#" className="hover:text-cyan-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-cyan-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-cyan-400 transition-colors">Contact Us</a>
+            <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms of Service</Link>
+            <Link to="/contact" className="hover:text-cyan-400 transition-colors">Contact Us</Link>
           </div>
         </div>
         <div className="mt-6 text-center text-xs text-cyan-100/60">
-          &copy; {new Date().getFullYear()} LinkGuardian. All rights reserved. 
+          &copy; {new Date().getFullYear()} LinkGuardian by Nexus. All rights reserved. 
           <div className="mt-1">For educational purposes only. Do not rely solely on this tool for security decisions.</div>
         </div>
       </div>
