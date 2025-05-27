@@ -68,11 +68,11 @@ const BulkCheck: React.FC<BulkCheckProps> = ({ onClose }) => {
   
   const getStatusIcon = (result: ScanResult) => {
     if (result.warningLevel === 'safe') {
-      return <ShieldCheck className="h-4 w-4 text-[hsl(var(--safe))]" />;
+      return <ShieldCheck className="h-4 w-4 text-green-400" />;
     } else if (result.warningLevel === 'warning') {
-      return <AlertTriangle className="h-4 w-4 text-[hsl(var(--warning))]" />;
+      return <AlertTriangle className="h-4 w-4 text-yellow-400" />;
     } else {
-      return <ShieldAlert className="h-4 w-4 text-[hsl(var(--danger))]" />;
+      return <ShieldAlert className="h-4 w-4 text-red-400" />;
     }
   };
 
@@ -80,7 +80,7 @@ const BulkCheck: React.FC<BulkCheckProps> = ({ onClose }) => {
     <div className="pt-6 space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="bulk-urls" className="text-sm font-medium mb-2 block">
+          <label htmlFor="bulk-urls" className="text-sm font-medium mb-2 block text-cyan-200">
             Enter multiple URLs (one per line or separated by commas)
           </label>
           <Textarea
@@ -90,15 +90,25 @@ const BulkCheck: React.FC<BulkCheckProps> = ({ onClose }) => {
             placeholder="https://example.com&#10;https://another-site.com&#10;suspicious-site.net"
             rows={6}
             disabled={isChecking}
-            className="w-full resize-none"
+            className="w-full resize-none bg-gray-800 border-cyan-800/30 text-cyan-100 placeholder:text-cyan-400/60"
           />
         </div>
         
-        <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isChecking}>
+        <div className="flex flex-col sm:flex-row justify-between gap-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose} 
+            disabled={isChecking}
+            className="border-cyan-600 text-cyan-100 bg-gray-800/50 hover:bg-cyan-600/20 hover:text-cyan-300"
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isChecking}>
+          <Button 
+            type="submit" 
+            disabled={isChecking}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
+          >
             {isChecking ? 'Checking...' : 'Check All URLs'}
           </Button>
         </div>
@@ -106,22 +116,22 @@ const BulkCheck: React.FC<BulkCheckProps> = ({ onClose }) => {
       
       {results.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-lg font-medium mb-3">Results</h3>
+          <h3 className="text-lg font-medium mb-3 text-cyan-300">Results</h3>
           <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
             {results.map((result, index) => (
               <div 
                 key={index} 
                 className={`p-3 rounded-md border flex items-start justify-between gap-2 ${
-                  result.isSafe ? 'bg-green-50 border-green-200' : 
-                  result.warningLevel === 'warning' ? 'bg-yellow-50 border-yellow-200' : 
-                  'bg-red-50 border-red-200'
+                  result.isSafe ? 'bg-green-900/30 border-green-400/30' : 
+                  result.warningLevel === 'warning' ? 'bg-yellow-900/30 border-yellow-400/30' : 
+                  'bg-red-900/30 border-red-400/30'
                 }`}
               >
-                <div className="flex items-center gap-2 overflow-hidden">
+                <div className="flex items-center gap-2 overflow-hidden min-w-0">
                   {getStatusIcon(result)}
-                  <span className="text-sm truncate font-medium">{result.url}</span>
+                  <span className="text-sm truncate font-medium text-cyan-100">{result.url}</span>
                 </div>
-                <div className="text-xs whitespace-nowrap">
+                <div className="text-xs whitespace-nowrap text-cyan-300">
                   {result.isSafe ? 'Safe' : 'Potentially unsafe'}
                 </div>
               </div>
