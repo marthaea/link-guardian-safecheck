@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Mail, Github, Building2, Users, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const ContactUs = () => {
   return (
@@ -73,7 +74,6 @@ const ContactUs = () => {
                 
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <p className="text-cyan-200 font-semibold mb-2">Primary Contact</p>
                     <a 
                       href="tel:+256740014177" 
                       className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
@@ -84,7 +84,6 @@ const ContactUs = () => {
                   </div>
                   
                   <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <p className="text-cyan-200 font-semibold mb-2">Alternative Contact</p>
                     <a 
                       href="tel:+256705713086" 
                       className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
@@ -106,9 +105,15 @@ const ContactUs = () => {
               
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                  <div>
-                    <h3 className="font-semibold text-cyan-200">Martha</h3>
-                    <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src="/lovable-uploads/f5e0feaf-69f3-42a0-91b2-45ed6c8e5367.png" alt="Martha" />
+                      <AvatarFallback className="bg-cyan-600 text-white">M</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold text-cyan-200">Martha</h3>
+                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                    </div>
                   </div>
                   <Button 
                     size="sm" 
@@ -122,9 +127,15 @@ const ContactUs = () => {
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                  <div>
-                    <h3 className="font-semibold text-cyan-200">Jonathan</h3>
-                    <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src="/lovable-uploads/8916d1cd-66ef-4752-86ae-f52586f0214f.png" alt="Jonathan" />
+                      <AvatarFallback className="bg-cyan-600 text-white">J</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold text-cyan-200">Jonathan</h3>
+                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                    </div>
                   </div>
                   <Button 
                     size="sm" 
@@ -154,7 +165,7 @@ const ContactUs = () => {
                   onClick={() => window.open('tel:+256740014177')}
                 >
                   <Phone className="mr-2 h-5 w-5" />
-                  Call Primary
+                  Call Us
                 </Button>
                 <Button 
                   size="lg" 
