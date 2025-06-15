@@ -1,7 +1,7 @@
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Mail, Github, Building2, Users } from 'lucide-react';
+import { Mail, Github, Building2, Users, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ContactUs = () => {
@@ -57,48 +57,84 @@ const ContactUs = () => {
                     <Mail className="h-5 w-5 text-cyan-400" />
                     <span>Contact us through our co-founders on GitHub</span>
                   </div>
+                  <div className="flex items-center gap-3 text-cyan-100/80">
+                    <Phone className="h-5 w-5 text-cyan-400" />
+                    <span>Call us directly</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Co-founders */}
+              {/* Phone Numbers */}
               <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30">
                 <div className="flex items-center gap-3 mb-6">
-                  <Users className="h-8 w-8 text-cyan-400" />
-                  <h2 className="text-2xl font-semibold text-cyan-300">Co-founders</h2>
+                  <Phone className="h-8 w-8 text-cyan-400" />
+                  <h2 className="text-2xl font-semibold text-cyan-300">Phone Numbers</h2>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <div>
-                      <h3 className="font-semibold text-cyan-200">Martha</h3>
-                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                      onClick={() => window.open('https://github.com/marthaea', '_blank')}
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
+                    <p className="text-cyan-200 font-semibold mb-2">Primary Contact</p>
+                    <a 
+                      href="tel:+256740014177" 
+                      className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
                     >
-                      <Github className="mr-2 h-4 w-4" />
-                      @marthaea
-                    </Button>
+                      <Phone className="h-4 w-4" />
+                      +256 740 014 177
+                    </a>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <div>
-                      <h3 className="font-semibold text-cyan-200">Jonathan</h3>
-                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                      onClick={() => window.open('https://github.com/jonathansaint', '_blank')}
+                  <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
+                    <p className="text-cyan-200 font-semibold mb-2">Alternative Contact</p>
+                    <a 
+                      href="tel:+256705713086" 
+                      className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
                     >
-                      <Github className="mr-2 h-4 w-4" />
-                      @jonathansaint
-                    </Button>
+                      <Phone className="h-4 w-4" />
+                      +256 705 713 086
+                    </a>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Co-founders */}
+            <div className="mt-8 bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30">
+              <div className="flex items-center gap-3 mb-6">
+                <Users className="h-8 w-8 text-cyan-400" />
+                <h2 className="text-2xl font-semibold text-cyan-300">Co-founders</h2>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
+                  <div>
+                    <h3 className="font-semibold text-cyan-200">Martha</h3>
+                    <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
+                    onClick={() => window.open('https://github.com/marthaea', '_blank')}
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    @marthaea
+                  </Button>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
+                  <div>
+                    <h3 className="font-semibold text-cyan-200">Jonathan</h3>
+                    <p className="text-cyan-100/70 text-sm">Co-founder</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
+                    onClick={() => window.open('https://github.com/jonathansaint', '_blank')}
+                  >
+                    <Github className="mr-2 h-4 w-4" />
+                    @jonathansaint
+                  </Button>
                 </div>
               </div>
             </div>
@@ -108,9 +144,18 @@ const ContactUs = () => {
               <h3 className="text-xl font-semibold text-cyan-300 mb-4">Have Questions or Feedback?</h3>
               <p className="text-cyan-100/90 mb-6">
                 We'd love to hear from you! Whether you have questions about LinkGuardian, 
-                want to report a bug, or have suggestions for improvements, feel free to reach out to our co-founders on GitHub.
+                want to report a bug, or have suggestions for improvements, feel free to reach out to us.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
+                  onClick={() => window.open('tel:+256740014177')}
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Call Primary
+                </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
