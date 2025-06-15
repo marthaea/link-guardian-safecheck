@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { Link, Shield } from "lucide-react";
+import { Link as LinkIcon, Shield } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import BulkCheck from "./BulkCheck";
 
@@ -19,9 +20,9 @@ const Header = () => {
           <nav className="hidden md:block">
             <ul className="flex gap-4 lg:gap-6">
               <li>
-                <a href="#" className="text-sm font-medium hover:text-cyan-400 text-cyan-100 transition-colors">
+                <Link to="/" className="text-sm font-medium hover:text-cyan-400 text-cyan-100 transition-colors">
                   Home
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#about" className="text-sm font-medium hover:text-cyan-400 text-cyan-100 transition-colors">
@@ -33,12 +34,17 @@ const Header = () => {
                   How It Works
                 </a>
               </li>
+              <li>
+                <Link to="/contact" className="text-sm font-medium hover:text-cyan-400 text-cyan-100 transition-colors">
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </nav>
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button size="sm" variant="outline" className="border-cyan-600 text-cyan-100 bg-gray-800/50 hover:bg-cyan-600/20 hover:text-cyan-300">
-                <Link className="mr-2 h-4 w-4" />
+                <LinkIcon className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Bulk Check</span>
                 <span className="sm:hidden">Bulk</span>
               </Button>
