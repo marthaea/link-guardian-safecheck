@@ -5,6 +5,7 @@ import LinkForm from '@/components/LinkForm';
 import ScanResults, { ScanResult } from '@/components/ScanResults';
 import ScanAnimation from '@/components/ScanAnimation';
 import Footer from '@/components/Footer';
+import TypingAnimation from '@/components/TypingAnimation';
 import { checkLink } from '@/utils/linkChecker';
 import { Shield, Mail, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,14 @@ const Index = () => {
     }
   };
 
+  const typingWords = [
+    "phishing attacks",
+    "malicious links", 
+    "email scams",
+    "suspicious URLs",
+    "online threats"
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-cyan-100">
       <Header />
@@ -72,9 +81,11 @@ const Index = () => {
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">
               <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Link Guardian</span> SafeCheck
             </h1>
+            <p className="text-lg md:text-xl lg:text-2xl text-cyan-100 max-w-3xl mx-auto mb-2 px-4">
+              Safely check suspicious links and emails before you click.
+            </p>
             <p className="text-lg md:text-xl lg:text-2xl text-cyan-100 max-w-3xl mx-auto mb-8 px-4">
-              Safely check suspicious links and emails before you click. 
-              Protect yourself from phishing, malware, and scams.
+              Protect yourself from <TypingAnimation words={typingWords} />.
             </p>
             
             <div className="flex justify-center mb-8 px-4" id="check-section">

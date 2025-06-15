@@ -3,8 +3,8 @@ import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-// Supabase project URL for the edge function
-const SUPABASE_PROJECT_URL = "https://ulbsrnosehxzsysuyzsp.supabase.co";
+// Updated API URL for link checking
+const LINK_CHECK_API_URL = "https://phisher-yeu4.onrender.com/api/check-url";
 
 export const checkLink = async (input: string): Promise<ScanResult> => {
   try {
@@ -15,16 +15,15 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
-    console.log("Calling edge function to check link:", input);
+    console.log("Calling API to check link:", input);
     
-    // Call the edge function to check the link
-    const response = await fetch(`${SUPABASE_PROJECT_URL}/functions/v1/check-link`, {
+    // Call the new API to check the link
+    const response = await fetch(LINK_CHECK_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await supabase.auth.getSession().then(res => res.data.session?.access_token || '')}`,
       },
-      body: JSON.stringify({ input, userId }),
+      body: JSON.stringify({ url: input }),
     });
     
     if (!response.ok) {
@@ -38,25 +37,27 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
         variant: "destructive",
       });
       
-      // Continue with simulation from the edge function
-      // The edge function will now fall back to simulation if no API key is available
+      // Fall back to simulation
+      throw new Error(`API error: ${response.status}`);
     }
     
-    const scanResult = await response.json();
-    console.log("Scan result:", scanResult);
+    const apiResult = await response.json();
+    console.log("API result:", apiResult);
     
-    // If we got an error object from the API, throw it to be caught below
-    if (scanResult.error) {
-      throw new Error(scanResult.details || scanResult.error);
-    }
+    // Transform API response to our ScanResult format
+    const scanResult: ScanResult = {
+      url: input,
+      isSafe: apiResult.safe || false,
+      type: input.includes('@') ? 'email' : 'link',
+      threatDetails: apiResult.message || 'Link analysis completed',
+      warningLevel: apiResult.safe ? 'safe' : 'danger',
+      timestamp: new Date(),
+    };
     
     // Ensure animation plays for at least 2 seconds
     await ensureMinimumAnimationTime(startTime);
     
-    return {
-      ...scanResult,
-      timestamp: new Date(),
-    };
+    return scanResult;
   } catch (error) {
     console.error("Link checker error:", error);
     
@@ -65,7 +66,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       url: input,
       isSafe: false,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: `An error occurred while checking this link. Our system will be using simulated results instead.`,
+      threatDetails: `An error occurred while checking this link. Please try again or verify the link manually.`,
       warningLevel: 'warning',
       timestamp: new Date(),
     };
