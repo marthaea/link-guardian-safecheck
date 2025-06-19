@@ -1,10 +1,6 @@
 
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-
-// Updated API URL for link checking
-const LINK_CHECK_API_URL = "https://phisher-yeu4.onrender.com/api/check-url";
 
 export const checkLink = async (input: string): Promise<ScanResult> => {
   try {
@@ -15,42 +11,30 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
-    console.log("Calling API to check link:", input);
+    console.log("Calling Supabase Edge Function to check link:", input);
     
-    // Call the new API to check the link
-    const response = await fetch(LINK_CHECK_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url: input }),
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('check-link', {
+      body: { 
+        input: input,
+        userId: userId 
+      }
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API error (${response.status}):`, errorText);
-      
-      // Show toast notification for API errors
-      toast({
-        title: "API Error",
-        description: `Could not check link security. Using simulation instead.`,
-        variant: "destructive",
-      });
-      
-      // Fall back to simulation
-      throw new Error(`API error: ${response.status}`);
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw error;
     }
     
-    const apiResult = await response.json();
-    console.log("API result:", apiResult);
+    console.log("Supabase function result:", data);
     
-    // Transform API response to our ScanResult format
+    // Transform the response to our ScanResult format
     const scanResult: ScanResult = {
       url: input,
-      isSafe: apiResult.safe || false,
+      isSafe: data.isSafe || false,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: apiResult.message || 'Link analysis completed',
-      warningLevel: apiResult.safe ? 'safe' : 'danger',
+      threatDetails: data.threatDetails || 'Link analysis completed',
+      warningLevel: data.warningLevel || (data.isSafe ? 'safe' : 'danger'),
       timestamp: new Date(),
     };
     
