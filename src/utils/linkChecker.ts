@@ -1,4 +1,3 @@
-
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -66,36 +65,45 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
 // Format detailed threat information
 function formatThreatDetails(data: any): string {
   if (data.isSafe) {
-    return 'This link appears to be safe based on our security analysis.';
+    return '✅ This link appears to be safe based on our security analysis.';
   }
   
   let details = [];
   
-  if (data.riskScore) {
+  // Add risk score if available
+  if (data.riskScore !== undefined && data.riskScore !== null) {
     details.push(`🛡️ Risk Score: ${data.riskScore}`);
   }
   
-  if (data.phishing) {
-    details.push(`⚠️ Phishing: ${data.phishing === true ? 'Yes' : data.phishing}`);
+  // Add phishing status
+  if (data.phishing !== undefined && data.phishing !== null) {
+    const phishingValue = data.phishing === true ? 'Yes' : data.phishing === false ? 'No' : data.phishing;
+    details.push(`⚠️ Phishing: ${phishingValue}`);
   }
   
-  if (data.suspicious) {
-    details.push(`🚨 Suspicious: ${data.suspicious === true ? 'Yes' : data.suspicious}`);
+  // Add suspicious status
+  if (data.suspicious !== undefined && data.suspicious !== null) {
+    const suspiciousValue = data.suspicious === true ? 'Yes' : data.suspicious === false ? 'No' : data.suspicious;
+    details.push(`🚨 Suspicious: ${suspiciousValue}`);
   }
   
-  if (data.spamming) {
-    details.push(`📬 Spamming: ${data.spamming === true ? 'Yes' : data.spamming}`);
+  // Add spamming status
+  if (data.spamming !== undefined && data.spamming !== null) {
+    const spammingValue = data.spamming === true ? 'Yes' : data.spamming === false ? 'No' : data.spamming;
+    details.push(`📬 Spamming: ${spammingValue}`);
   }
   
+  // Add domain age
   if (data.domainAge) {
     details.push(`📅 Domain Age: ${data.domainAge}`);
   }
   
+  // Add country
   if (data.country) {
     details.push(`🌐 Country: ${data.country}`);
   }
   
-  return details.length > 0 ? details.join('\n') : 'This link has been flagged as potentially unsafe.';
+  return details.length > 0 ? details.join('\n') : '⚠️ This link has been flagged as potentially unsafe.';
 }
 
 // Ensure the animation displays for at least 2 seconds for UX purposes
