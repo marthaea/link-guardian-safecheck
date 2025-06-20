@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export type ScanResult = {
   url: string;
@@ -73,6 +74,10 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
       default:
         return '';
     }
+  };
+
+  const getAlertVariant = () => {
+    return warningLevel === 'danger' ? 'destructive' : 'default';
   };
 
   const handleCopy = () => {
@@ -147,13 +152,15 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           {threatDetails && (
             <div className="pt-2">
               <div className="text-sm font-medium mb-1">Security Analysis:</div>
-              <div className="text-sm bg-slate-50 p-3 rounded-md">
-                <pre className="whitespace-pre-wrap font-mono text-xs">{threatDetails}</pre>
-              </div>
+              <Alert variant={getAlertVariant()} className="border-opacity-50">
+                <AlertDescription>
+                  <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{threatDetails}</pre>
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
-          <div className="bg-slate-50 p-3 rounded-md">
+          <div className="bg-muted/50 p-3 rounded-md border border-border/50">
             <p className="text-xs text-muted-foreground">
               {isSafe 
                 ? "Our scan did not detect any obvious security risks with this item."
