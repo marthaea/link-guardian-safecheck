@@ -13,6 +13,12 @@ export type ScanResult = {
   threatDetails?: string;
   warningLevel?: 'safe' | 'warning' | 'danger';
   timestamp: Date;
+  riskScore?: number;
+  phishing?: boolean | string;
+  suspicious?: boolean | string;
+  spamming?: boolean | string;
+  domainAge?: string;
+  country?: string;
 };
 
 interface ScanResultsProps {
@@ -140,8 +146,10 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           
           {threatDetails && (
             <div className="pt-2">
-              <div className="text-sm font-medium mb-1">Details:</div>
-              <p className="text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">{threatDetails}</p>
+              <div className="text-sm font-medium mb-1">Security Analysis:</div>
+              <div className="text-sm bg-slate-50 p-3 rounded-md">
+                <pre className="whitespace-pre-wrap font-mono text-xs">{threatDetails}</pre>
+              </div>
             </div>
           )}
 

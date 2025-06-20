@@ -28,14 +28,20 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     console.log("Supabase function result:", data);
     
-    // Transform the response to our ScanResult format
+    // Transform the response to our ScanResult format with detailed information
     const scanResult: ScanResult = {
       url: input,
       isSafe: data.isSafe || false,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: data.threatDetails || 'Link analysis completed',
+      threatDetails: formatThreatDetails(data),
       warningLevel: data.warningLevel || (data.isSafe ? 'safe' : 'danger'),
       timestamp: new Date(),
+      riskScore: data.riskScore,
+      phishing: data.phishing,
+      suspicious: data.suspicious,
+      spamming: data.spamming,
+      domainAge: data.domainAge,
+      country: data.country,
     };
     
     // Ensure animation plays for at least 2 seconds
@@ -56,6 +62,41 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     };
   }
 };
+
+// Format detailed threat information
+function formatThreatDetails(data: any): string {
+  if (data.isSafe) {
+    return 'This link appears to be safe based on our security analysis.';
+  }
+  
+  let details = [];
+  
+  if (data.riskScore) {
+    details.push(`🛡️ Risk Score: ${data.riskScore}`);
+  }
+  
+  if (data.phishing) {
+    details.push(`⚠️ Phishing: ${data.phishing === true ? 'Yes' : data.phishing}`);
+  }
+  
+  if (data.suspicious) {
+    details.push(`🚨 Suspicious: ${data.suspicious === true ? 'Yes' : data.suspicious}`);
+  }
+  
+  if (data.spamming) {
+    details.push(`📬 Spamming: ${data.spamming === true ? 'Yes' : data.spamming}`);
+  }
+  
+  if (data.domainAge) {
+    details.push(`📅 Domain Age: ${data.domainAge}`);
+  }
+  
+  if (data.country) {
+    details.push(`🌐 Country: ${data.country}`);
+  }
+  
+  return details.length > 0 ? details.join('\n') : 'This link has been flagged as potentially unsafe.';
+}
 
 // Ensure the animation displays for at least 2 seconds for UX purposes
 async function ensureMinimumAnimationTime(startTime: number): Promise<void> {
