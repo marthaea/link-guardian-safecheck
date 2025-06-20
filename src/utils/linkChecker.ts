@@ -62,48 +62,52 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
   }
 };
 
-// Format detailed threat information
+// Format detailed threat information - ALWAYS show details
 function formatThreatDetails(data: any): string {
-  if (data.isSafe) {
-    return '✅ This link appears to be safe based on our security analysis.';
-  }
-  
   let details = [];
   
-  // Add risk score if available
+  // Always add risk score if available
   if (data.riskScore !== undefined && data.riskScore !== null) {
     details.push(`🛡️ Risk Score: ${data.riskScore}`);
   }
   
-  // Add phishing status
+  // Always add phishing status
   if (data.phishing !== undefined && data.phishing !== null) {
     const phishingValue = data.phishing === true ? 'Yes' : data.phishing === false ? 'No' : data.phishing;
     details.push(`⚠️ Phishing: ${phishingValue}`);
   }
   
-  // Add suspicious status
+  // Always add suspicious status
   if (data.suspicious !== undefined && data.suspicious !== null) {
     const suspiciousValue = data.suspicious === true ? 'Yes' : data.suspicious === false ? 'No' : data.suspicious;
     details.push(`🚨 Suspicious: ${suspiciousValue}`);
   }
   
-  // Add spamming status
+  // Always add spamming status
   if (data.spamming !== undefined && data.spamming !== null) {
     const spammingValue = data.spamming === true ? 'Yes' : data.spamming === false ? 'No' : data.spamming;
     details.push(`📬 Spamming: ${spammingValue}`);
   }
   
-  // Add domain age
+  // Always add domain age
   if (data.domainAge) {
     details.push(`📅 Domain Age: ${data.domainAge}`);
   }
   
-  // Add country
+  // Always add country
   if (data.country) {
     details.push(`🌐 Country: ${data.country}`);
   }
   
-  return details.length > 0 ? details.join('\n') : '⚠️ This link has been flagged as potentially unsafe.';
+  // Add safety assessment at the top
+  const safetyStatus = data.isSafe 
+    ? '✅ This link appears to be safe based on our security analysis.' 
+    : '⚠️ This link has been flagged as potentially unsafe.';
+  
+  // Combine safety status with detailed information
+  return details.length > 0 
+    ? `${safetyStatus}\n\n${details.join('\n')}` 
+    : safetyStatus;
 }
 
 // Ensure the animation displays for at least 2 seconds for UX purposes

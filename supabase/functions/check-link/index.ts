@@ -64,6 +64,12 @@ serve(async (req) => {
         threatDetails: 'Invalid format. Could not process the input.',
         warningLevel: 'warning',
         timestamp: new Date(),
+        riskScore: 0,
+        phishing: false,
+        suspicious: false,
+        spamming: false,
+        domainAge: 'Unknown',
+        country: 'Unknown',
       };
       
       // Store the result if user is authenticated
@@ -77,7 +83,7 @@ serve(async (req) => {
       )
     }
 
-    // Special case for demo purposes - make 'example.com' always safe
+    // Special case for demo purposes - make 'example.com' always safe with details
     if (domain.includes('example.com')) {
       const result = {
         url: input,
@@ -85,6 +91,12 @@ serve(async (req) => {
         type,
         warningLevel: 'safe',
         timestamp: new Date(),
+        riskScore: 15,
+        phishing: false,
+        suspicious: false,
+        spamming: false,
+        domainAge: '5 years ago',
+        country: 'US',
       };
       
       // Store the result if user is authenticated
@@ -135,25 +147,23 @@ serve(async (req) => {
       const data = await response.json();
       console.log("IPQS API response:", data);
       
-      // Parse IPQS response
+      // Parse IPQS response with detailed information
       const isSafe = !data.unsafe && data.risk_score < 85;
       const warningLevel = data.risk_score > 85 ? 'danger' : 
                           data.risk_score > 65 ? 'warning' : 'safe';
-      
-      let threatDetails = '';
-      if (data.risk_score > 85) {
-        threatDetails = `High risk (${data.risk_score}%). This link was flagged for: ${data.domain_age ? 'New domain. ' : ''}${data.spamming ? 'Spam activity. ' : ''}${data.malware ? 'Potential malware. ' : ''}${data.phishing ? 'Potential phishing. ' : ''}`;
-      } else if (data.risk_score > 65) {
-        threatDetails = `Medium risk (${data.risk_score}%). Proceed with caution.`;
-      }
       
       const result = {
         url: input,
         isSafe,
         type,
         warningLevel,
-        threatDetails: isSafe ? undefined : threatDetails,
         timestamp: new Date(),
+        riskScore: data.risk_score || 0,
+        phishing: data.phishing || false,
+        suspicious: data.suspicious || false,
+        spamming: data.spamming || false,
+        domainAge: data.domain_age ? `${data.domain_age} days ago` : 'Unknown',
+        country: data.country_code || 'Unknown',
       };
       
       // Store the result if user is authenticated
@@ -221,7 +231,7 @@ async function storeResult(result: any, userId: string) {
   }
 }
 
-// Fallback simulation method
+// Enhanced simulation method with detailed results
 function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'link') {
   const maliciousDomains = [
     'evil.com',
@@ -247,9 +257,14 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       url: input,
       isSafe: false,
       type,
-      threatDetails: 'This domain is associated with known malicious activity.',
       warningLevel: 'danger',
       timestamp: new Date(),
+      riskScore: 92,
+      phishing: true,
+      suspicious: true,
+      spamming: true,
+      domainAge: '2 months ago',
+      country: 'RU',
     };
   }
   
@@ -264,20 +279,63 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       isSafe: false,
       type,
       warningLevel: 'warning',
-      threatDetails: 'This link contains potentially suspicious patterns. Use caution.',
       timestamp: new Date(),
+      riskScore: 72,
+      phishing: false,
+      suspicious: true,
+      spamming: false,
+      domainAge: '6 months ago',
+      country: 'CN',
     };
   }
   
-  // Randomize results for demo purposes
-  const randomSafe = Math.random() > 0.3;
+  // Generate realistic results for different scenarios
+  const scenarios = [
+    // Safe result
+    {
+      url: input,
+      isSafe: true,
+      type,
+      warningLevel: 'safe',
+      timestamp: new Date(),
+      riskScore: 15,
+      phishing: false,
+      suspicious: false,
+      spamming: false,
+      domainAge: '3 years ago',
+      country: 'US',
+    },
+    // Risky result
+    {
+      url: input,
+      isSafe: false,
+      type,
+      warningLevel: 'danger',
+      timestamp: new Date(),
+      riskScore: 88,
+      phishing: true,
+      suspicious: true,
+      spamming: false,
+      domainAge: '1 month ago',
+      country: 'RU',
+    },
+    // Medium risk result
+    {
+      url: input,
+      isSafe: false,
+      type,
+      warningLevel: 'warning',
+      timestamp: new Date(),
+      riskScore: 68,
+      phishing: false,
+      suspicious: true,
+      spamming: true,
+      domainAge: '4 months ago',
+      country: 'BR',
+    }
+  ];
   
-  return {
-    url: input,
-    isSafe: randomSafe,
-    type,
-    threatDetails: randomSafe ? undefined : 'This link has characteristics similar to known threats.',
-    warningLevel: randomSafe ? 'safe' : Math.random() > 0.5 ? 'danger' : 'warning',
-    timestamp: new Date(),
-  };
+  // For demo purposes, cycle through scenarios based on domain hash
+  const domainHash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  return scenarios[domainHash % scenarios.length];
 }
