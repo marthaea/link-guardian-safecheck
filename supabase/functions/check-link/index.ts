@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -46,14 +45,23 @@ serve(async (req) => {
     const isEmail = input.includes('@') && input.includes('.');
     const type = isEmail ? 'email' : 'link';
     
-    // Extract domain from URL or email
+    // Extract domain from URL or email with proper normalization
     let domain = '';
+    let normalizedInput = input;
     try {
       if (isEmail) {
         domain = input.split('@')[1].toLowerCase();
       } else {
+        // Normalize URL by removing trailing slashes and adding protocol if missing
+        let urlInput = input.trim().toLowerCase();
+        // Remove trailing slashes for consistency
+        urlInput = urlInput.replace(/\/+$/, '');
+        normalizedInput = urlInput;
+        
         // Add http if missing to make URL parsing work
-        const urlInput = input.startsWith('http') ? input : `http://${input}`;
+        if (!urlInput.startsWith('http')) {
+          urlInput = `http://${urlInput}`;
+        }
         domain = new URL(urlInput).hostname.toLowerCase();
       }
     } catch (e) {
@@ -115,7 +123,7 @@ serve(async (req) => {
     // Check if API key is available, otherwise fall back to simulation
     if (!IPQS_API_KEY) {
       console.log("No API key configured, falling back to simulation");
-      const result = simulateSecurityCheck(input, domain, type);
+      const result = simulateSecurityCheck(normalizedInput, domain, type);
       
       // Store the result if user is authenticated
       if (userId) {
@@ -132,7 +140,7 @@ serve(async (req) => {
       // Use IP Quality Score API for real threat checking
       const url = new URL(IP_QUALITY_SCORE_API_ENDPOINT);
       url.searchParams.append('key', IPQS_API_KEY);
-      url.searchParams.append('url', input);
+      url.searchParams.append('url', normalizedInput);
       url.searchParams.append('strictness', '2');
       url.searchParams.append('fast', 'true');
 
@@ -180,7 +188,7 @@ serve(async (req) => {
       console.error("API error:", error);
       
       // Fall back to simulation for demo/development
-      const result = simulateSecurityCheck(input, domain, type);
+      const result = simulateSecurityCheck(normalizedInput, domain, type);
       
       // Store the result if user is authenticated
       if (userId) {
@@ -231,7 +239,7 @@ async function storeResult(result: any, userId: string) {
   }
 }
 
-// Enhanced simulation method with detailed results
+// Enhanced simulation method with consistent domain-based logic
 function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'link') {
   const maliciousDomains = [
     'evil.com',
@@ -268,7 +276,7 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
     };
   }
   
-  // Look for suspicious patterns
+  // Look for suspicious patterns in the full input (not just domain)
   const hasSuspiciousPatterns = suspiciousPatterns.some(pattern => 
     input.toLowerCase().includes(pattern)
   );
@@ -289,7 +297,10 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
     };
   }
   
-  // Generate realistic results for different scenarios
+  // Generate consistent results based on domain hash (not full URL)
+  // This ensures trailing slashes don't affect the result
+  const domainHash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  
   const scenarios = [
     // Safe result
     {
@@ -335,7 +346,5 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
     }
   ];
   
-  // For demo purposes, cycle through scenarios based on domain hash
-  const domainHash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   return scenarios[domainHash % scenarios.length];
 }
