@@ -25,7 +25,6 @@ export const registerServiceWorker = async (): Promise<void> => {
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             console.log('New service worker available');
-            // You can show a notification to the user about the update
             showUpdateNotification();
           }
         });
@@ -47,7 +46,8 @@ const showUpdateNotification = (): void => {
 // Check if app is running as PWA
 export const isPWAInstalled = (): boolean => {
   return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+         (window.navigator as any).standalone === true ||
+         document.referrer.includes('android-app://');
 };
 
 // Install prompt handling
@@ -58,40 +58,18 @@ export const setupInstallPrompt = (): void => {
     console.log('Install prompt available');
     e.preventDefault();
     deferredPrompt = e;
-    
-    // Show custom install button or notification
-    showInstallPrompt();
   });
   
   window.addEventListener('appinstalled', () => {
     console.log('PWA was installed');
     deferredPrompt = null;
-    hideInstallPrompt();
   });
-};
-
-// Show install prompt to user
-const showInstallPrompt = (): void => {
-  // You can customize this to show your own install UI
-  const installButton = document.getElementById('pwa-install-button');
-  if (installButton) {
-    installButton.style.display = 'block';
-  }
-};
-
-// Hide install prompt
-const hideInstallPrompt = (): void => {
-  const installButton = document.getElementById('pwa-install-button');
-  if (installButton) {
-    installButton.style.display = 'none';
-  }
 };
 
 // Trigger install prompt
 export const showInstallDialog = async (): Promise<void> => {
   if (!deferredPrompt) {
-    console.log('Install prompt not available');
-    return;
+    throw new Error('Install prompt not available');
   }
   
   try {
@@ -101,6 +79,7 @@ export const showInstallDialog = async (): Promise<void> => {
     deferredPrompt = null;
   } catch (error) {
     console.error('Error showing install prompt:', error);
+    throw error;
   }
 };
 

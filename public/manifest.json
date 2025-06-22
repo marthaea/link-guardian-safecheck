@@ -11,6 +11,7 @@
   "categories": ["security", "utilities", "productivity"],
   "lang": "en",
   "dir": "ltr",
+  "scope": "/",
   "icons": [
     {
       "src": "/favicon.ico",
