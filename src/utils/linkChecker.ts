@@ -1,5 +1,7 @@
+
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
+import { getSuspicionScore, combineAnalysis } from "./suspiciousUrlScorer";
 
 export const checkLink = async (input: string): Promise<ScanResult> => {
   try {
@@ -11,6 +13,10 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const userId = user?.id;
     
     console.log("Calling Supabase Edge Function to check link:", input);
+    
+    // Perform heuristic analysis first
+    const heuristicAnalysis = getSuspicionScore(input);
+    console.log("Heuristic analysis result:", heuristicAnalysis);
     
     // Call the Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('check-link', {
@@ -27,20 +33,25 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     console.log("Supabase function result:", data);
     
+    // Combine API results with heuristic analysis
+    const combinedResults = combineAnalysis(data, heuristicAnalysis);
+    
     // Transform the response to our ScanResult format with detailed information
     const scanResult: ScanResult = {
       url: input,
-      isSafe: data.isSafe || false,
+      isSafe: combinedResults.isSafe,
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: formatThreatDetails(data),
-      warningLevel: data.warningLevel || (data.isSafe ? 'safe' : 'danger'),
+      threatDetails: combinedResults.combinedThreatDetails,
+      warningLevel: determineCombinedWarningLevel(data, heuristicAnalysis),
       timestamp: new Date(),
-      riskScore: data.riskScore,
+      riskScore: combinedResults.riskScore,
       phishing: data.phishing,
       suspicious: data.suspicious,
       spamming: data.spamming,
       domainAge: data.domainAge,
       country: data.country,
+      heuristicScore: heuristicAnalysis.score,
+      heuristicRiskLevel: heuristicAnalysis.riskLevel,
     };
     
     // Ensure animation plays for at least 2 seconds
@@ -50,64 +61,61 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
   } catch (error) {
     console.error("Link checker error:", error);
     
-    // Fall back to a basic result when all else fails
+    // Fall back to heuristic analysis only when API fails
+    const heuristicAnalysis = getSuspicionScore(input);
+    
     return {
       url: input,
-      isSafe: false,
+      isSafe: heuristicAnalysis.riskLevel === 'low',
       type: input.includes('@') ? 'email' : 'link',
-      threatDetails: `An error occurred while checking this link. Please try again or verify the link manually.`,
-      warningLevel: 'warning',
+      threatDetails: `⚠️ External verification temporarily unavailable. Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
+      warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
       timestamp: new Date(),
+      riskScore: heuristicAnalysis.score,
+      heuristicScore: heuristicAnalysis.score,
+      heuristicRiskLevel: heuristicAnalysis.riskLevel,
     };
   }
 };
 
-// Format detailed threat information - ALWAYS show details
-function formatThreatDetails(data: any): string {
+// Determine combined warning level based on both API and heuristic results
+function determineCombinedWarningLevel(apiData: any, heuristicAnalysis: any): 'safe' | 'warning' | 'danger' {
+  const apiWarningLevel = apiData.warningLevel || (apiData.isSafe ? 'safe' : 'danger');
+  const heuristicWarningLevel = heuristicAnalysis.riskLevel === 'low' ? 'safe' : 
+                               heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger';
+  
+  // Return the more severe warning level
+  if (apiWarningLevel === 'danger' || heuristicWarningLevel === 'danger') {
+    return 'danger';
+  } else if (apiWarningLevel === 'warning' || heuristicWarningLevel === 'warning') {
+    return 'warning';
+  } else {
+    return 'safe';
+  }
+}
+
+// Format heuristic-only analysis for display when API fails
+function formatHeuristicOnlyDetails(heuristicAnalysis: any): string {
   let details = [];
   
-  // Always add risk score if available
-  if (data.riskScore !== undefined && data.riskScore !== null) {
-    details.push(`🛡️ Risk Score: ${data.riskScore}`);
+  details.push('🧠 Internal Heuristic Analysis:');
+  details.push(`   • Suspicion Score: ${heuristicAnalysis.score}/100`);
+  details.push(`   • Risk Level: ${heuristicAnalysis.riskLevel.toUpperCase()}`);
+  
+  if (heuristicAnalysis.factors.length > 0) {
+    details.push('   • Suspicious Factors Found:');
+    heuristicAnalysis.factors.forEach((factor: string) => {
+      details.push(`     - ${factor}`);
+    });
+  } else {
+    details.push('   • No suspicious patterns detected');
   }
   
-  // Always add phishing status
-  if (data.phishing !== undefined && data.phishing !== null) {
-    const phishingValue = data.phishing === true ? 'Yes' : data.phishing === false ? 'No' : data.phishing;
-    details.push(`⚠️ Phishing: ${phishingValue}`);
-  }
+  details.push('');
+  details.push('💡 Recommendation:');
+  details.push(heuristicAnalysis.explanation);
   
-  // Always add suspicious status
-  if (data.suspicious !== undefined && data.suspicious !== null) {
-    const suspiciousValue = data.suspicious === true ? 'Yes' : data.suspicious === false ? 'No' : data.suspicious;
-    details.push(`🚨 Suspicious: ${suspiciousValue}`);
-  }
-  
-  // Always add spamming status
-  if (data.spamming !== undefined && data.spamming !== null) {
-    const spammingValue = data.spamming === true ? 'Yes' : data.spamming === false ? 'No' : data.spamming;
-    details.push(`📬 Spamming: ${spammingValue}`);
-  }
-  
-  // Always add domain age
-  if (data.domainAge) {
-    details.push(`📅 Domain Age: ${data.domainAge}`);
-  }
-  
-  // Always add country
-  if (data.country) {
-    details.push(`🌐 Country: ${data.country}`);
-  }
-  
-  // Add safety assessment at the top
-  const safetyStatus = data.isSafe 
-    ? '✅ This link appears to be safe based on our security analysis.' 
-    : '⚠️ This link has been flagged as potentially unsafe.';
-  
-  // Combine safety status with detailed information
-  return details.length > 0 
-    ? `${safetyStatus}\n\n${details.join('\n')}` 
-    : safetyStatus;
+  return details.join('\n');
 }
 
 // Ensure the animation displays for at least 2 seconds for UX purposes

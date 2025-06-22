@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { AlertTriangle, Check, Link, Mail, ShieldAlert, ShieldCheck, X, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Check, Link, Mail, ShieldAlert, ShieldCheck, X, ExternalLink, Brain } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,6 +19,8 @@ export type ScanResult = {
   spamming?: boolean | string;
   domainAge?: string;
   country?: string;
+  heuristicScore?: number;
+  heuristicRiskLevel?: 'low' | 'medium' | 'high';
 };
 
 interface ScanResultsProps {
@@ -39,7 +40,15 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           <div className="rounded-full bg-[hsl(var(--safe))] bg-opacity-20 p-2">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <span className="font-medium">Safe to use</span>
+          <div className="flex flex-col">
+            <span className="font-medium">Safe to use</span>
+            {result.heuristicScore !== undefined && (
+              <span className="text-xs flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                Heuristic Score: {result.heuristicScore}/100
+              </span>
+            )}
+          </div>
         </div>
       );
     } else if (warningLevel === 'warning') {
@@ -48,7 +57,15 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           <div className="rounded-full bg-[hsl(var(--warning))] bg-opacity-20 p-2">
             <AlertTriangle className="h-6 w-6" />
           </div>
-          <span className="font-medium">Proceed with caution</span>
+          <div className="flex flex-col">
+            <span className="font-medium">Proceed with caution</span>
+            {result.heuristicScore !== undefined && (
+              <span className="text-xs flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                Heuristic Score: {result.heuristicScore}/100
+              </span>
+            )}
+          </div>
         </div>
       );
     } else {
@@ -57,7 +74,15 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           <div className="rounded-full bg-[hsl(var(--danger))] bg-opacity-20 p-2">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <span className="font-medium">Potentially unsafe</span>
+          <div className="flex flex-col">
+            <span className="font-medium">Potentially unsafe</span>
+            {result.heuristicScore !== undefined && (
+              <span className="text-xs flex items-center gap-1">
+                <Brain className="h-3 w-3" />
+                Heuristic Score: {result.heuristicScore}/100
+              </span>
+            )}
+          </div>
         </div>
       );
     }
@@ -125,14 +150,14 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
             {type === 'link' ? <Link className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
-            Scan Results
+            Advanced Scan Results
           </CardTitle>
           <Button variant="ghost" size="icon" onClick={onReset}>
             <X className="h-4 w-4" />
           </Button>
         </div>
         <CardDescription>
-          Scan completed at {result.timestamp.toLocaleTimeString()}
+          Scan completed at {result.timestamp.toLocaleTimeString()} • Enhanced with heuristic analysis
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -151,7 +176,7 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           
           {threatDetails && (
             <div className="pt-2">
-              <div className="text-sm font-medium mb-1">Security Analysis:</div>
+              <div className="text-sm font-medium mb-1">Comprehensive Security Analysis:</div>
               <Alert variant={getAlertVariant()} className="border-opacity-50">
                 <AlertDescription>
                   <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{threatDetails}</pre>
@@ -163,8 +188,8 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           <div className="bg-muted/50 p-3 rounded-md border border-border/50">
             <p className="text-xs text-muted-foreground">
               {isSafe 
-                ? "Our scan did not detect any obvious security risks with this item."
-                : "This scan detected potential security concerns. Be cautious before proceeding."}
+                ? "Our comprehensive analysis (external APIs + internal heuristics) did not detect significant security risks with this item."
+                : "Our security analysis detected potential concerns. This includes both external threat intelligence and our internal pattern recognition system."}
             </p>
           </div>
           
