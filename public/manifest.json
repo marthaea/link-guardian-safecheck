@@ -1,0 +1,62 @@
+
+{
+  "name": "Link Guardian Safe Check",
+  "short_name": "LinkGuardian",
+  "description": "Safely check suspicious links and emails before you click",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#06b6d4",
+  "orientation": "portrait-primary",
+  "categories": ["security", "utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Link Check",
+      "short_name": "Check Link",
+      "description": "Quickly check a suspicious link",
+      "url": "/?action=check",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "16x16 32x32 48x48"
+        }
+      ]
+    }
+  ]
+}

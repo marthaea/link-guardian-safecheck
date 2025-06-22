@@ -1,4 +1,3 @@
-
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 import { getSuspicionScore, combineAnalysis } from "./suspiciousUrlScorer";
@@ -42,7 +41,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       isSafe: combinedResults.isSafe,
       type: input.includes('@') ? 'email' : 'link',
       threatDetails: combinedResults.combinedThreatDetails,
-      warningLevel: determineCombinedWarningLevel(data, heuristicAnalysis),
+      warningLevel: combinedResults.warningLevel,
       timestamp: new Date(),
       riskScore: combinedResults.riskScore,
       phishing: data.phishing,
@@ -77,22 +76,6 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     };
   }
 };
-
-// Determine combined warning level based on both API and heuristic results
-function determineCombinedWarningLevel(apiData: any, heuristicAnalysis: any): 'safe' | 'warning' | 'danger' {
-  const apiWarningLevel = apiData.warningLevel || (apiData.isSafe ? 'safe' : 'danger');
-  const heuristicWarningLevel = heuristicAnalysis.riskLevel === 'low' ? 'safe' : 
-                               heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger';
-  
-  // Return the more severe warning level
-  if (apiWarningLevel === 'danger' || heuristicWarningLevel === 'danger') {
-    return 'danger';
-  } else if (apiWarningLevel === 'warning' || heuristicWarningLevel === 'warning') {
-    return 'warning';
-  } else {
-    return 'safe';
-  }
-}
 
 // Format heuristic-only analysis for display when API fails
 function formatHeuristicOnlyDetails(heuristicAnalysis: any): string {
