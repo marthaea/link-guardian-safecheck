@@ -14,7 +14,7 @@ const Header = () => {
 
   const handleBulkCheckOpen = () => {
     setShowBulkCheck(true);
-    setIsMobileMenuOpen(false); // Close mobile menu when opening bulk check
+    setIsMobileMenuOpen(false);
   };
 
   const handleBulkCheckClose = () => {
@@ -26,7 +26,7 @@ const Header = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-    setIsMobileMenuOpen(false); // Close mobile menu after navigation
+    setIsMobileMenuOpen(false);
   };
 
   return (

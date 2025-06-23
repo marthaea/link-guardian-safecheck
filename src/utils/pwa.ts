@@ -43,39 +43,63 @@ const showUpdateNotification = (): void => {
   }
 };
 
-// Check if app is running as PWA
+// Check if app is running as PWA - improved detection for Windows
 export const isPWAInstalled = (): boolean => {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true ||
-         document.referrer.includes('android-app://');
+  // Check for standalone mode
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  
+  // Check for iOS standalone
+  const isIOSStandalone = (window.navigator as any).standalone === true;
+  
+  // Check for Android app
+  const isAndroidApp = document.referrer.includes('android-app://');
+  
+  // Check for Windows PWA (additional detection)
+  const isWindowsPWA = window.matchMedia('(display-mode: minimal-ui)').matches;
+  
+  return isStandalone || isIOSStandalone || isAndroidApp || isWindowsPWA;
 };
 
-// Install prompt handling
+// Install prompt handling - improved for Windows browsers
 let deferredPrompt: any = null;
 
 export const setupInstallPrompt = (): void => {
   window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('Install prompt available');
+    console.log('Install prompt available - browser supports PWA installation');
     e.preventDefault();
     deferredPrompt = e;
+    
+    // Dispatch custom event to notify components
+    window.dispatchEvent(new CustomEvent('pwa-install-available'));
   });
   
   window.addEventListener('appinstalled', () => {
-    console.log('PWA was installed');
+    console.log('PWA was installed successfully');
     deferredPrompt = null;
+    
+    // Dispatch custom event to notify components
+    window.dispatchEvent(new CustomEvent('pwa-installed'));
   });
 };
 
-// Trigger install prompt
+// Trigger install prompt - enhanced for better Windows support
 export const showInstallDialog = async (): Promise<void> => {
   if (!deferredPrompt) {
     throw new Error('Install prompt not available');
   }
   
   try {
+    console.log('Showing install prompt...');
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     console.log(`User ${outcome} the install prompt`);
+    
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    
     deferredPrompt = null;
   } catch (error) {
     console.error('Error showing install prompt:', error);
