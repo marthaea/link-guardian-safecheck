@@ -61,12 +61,15 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     let scanResult: ScanResult;
     
+    // Determine the type properly
+    const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
+    
     if (offlineMode || !apiData) {
       // Fall back to heuristic analysis only
       scanResult = {
         url: input,
         isSafe: heuristicAnalysis.riskLevel === 'low',
-        type: input.includes('@') ? 'email' : 'link',
+        type: inputType,
         threatDetails: `${isOffline ? '🔌 You are currently offline. ' : '⚠️ External verification temporarily unavailable. '}Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
         warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
         timestamp: new Date(),
@@ -82,7 +85,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       scanResult = {
         url: input,
         isSafe: combinedResults.isSafe,
-        type: input.includes('@') ? 'email' : 'link',
+        type: inputType,
         threatDetails: combinedResults.combinedThreatDetails,
         warningLevel: combinedResults.warningLevel,
         timestamp: new Date(),
@@ -109,11 +112,12 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     // Fall back to heuristic analysis only when API fails
     const heuristicAnalysis = getSuspicionScore(input);
+    const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
     
-    const fallbackResult = {
+    const fallbackResult: ScanResult = {
       url: input,
       isSafe: heuristicAnalysis.riskLevel === 'low',
-      type: input.includes('@') ? 'email' : 'link',
+      type: inputType,
       threatDetails: `⚠️ External verification temporarily unavailable. Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
       warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
       timestamp: new Date(),
