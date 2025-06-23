@@ -5,6 +5,7 @@ import TypingAnimation from '@/components/TypingAnimation';
 import LinkForm from '@/components/LinkForm';
 import ScanAnimation from '@/components/ScanAnimation';
 import ScanResults, { ScanResult } from '@/components/ScanResults';
+import InstallButton from '@/components/InstallButton';
 
 interface HeroSectionProps {
   isLoading: boolean;
@@ -48,7 +49,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           Protect yourself from <TypingAnimation words={typingWords} />.
         </p>
         
-        <div className="flex justify-center mb-8 px-4" id="check-section">
+        <div className="flex justify-center mb-6 px-4" id="check-section">
           {!isLoading && !result ? (
             <LinkForm onSubmit={onSubmit} isLoading={isLoading} />
           ) : isLoading ? (
@@ -56,6 +57,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           ) : (
             <ScanResults result={result} onReset={onReset} />
           )}
+        </div>
+        
+        {/* Install Button placed below the form/results */}
+        <div className="flex justify-center">
+          <InstallButton />
         </div>
       </div>
     </section>

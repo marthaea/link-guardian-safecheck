@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Shield, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import InstallButton from './InstallButton';
 import BulkCheck from './BulkCheck';
 
 const Header = () => {
@@ -63,12 +62,10 @@ const Header = () => {
             >
               Bulk Check
             </Button>
-            <InstallButton />
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden flex items-center space-x-2">
-            <InstallButton />
+          <div className="lg:hidden">
             <Button
               onClick={toggleMobileMenu}
               variant="ghost"

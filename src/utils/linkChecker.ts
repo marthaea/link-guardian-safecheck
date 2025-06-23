@@ -1,9 +1,19 @@
+
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 import { getSuspicionScore, combineAnalysis } from "./suspiciousUrlScorer";
 
+// Simple in-memory cache for consistent results
+const linkCache = new Map<string, ScanResult>();
+
 export const checkLink = async (input: string): Promise<ScanResult> => {
   try {
+    // Check cache first for consistent results
+    if (linkCache.has(input)) {
+      console.log("Returning cached result for:", input);
+      return linkCache.get(input)!;
+    }
+
     // Start animation for at least 2 seconds
     const startTime = Date.now();
     
@@ -17,41 +27,78 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const heuristicAnalysis = getSuspicionScore(input);
     console.log("Heuristic analysis result:", heuristicAnalysis);
     
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke('check-link', {
-      body: { 
-        input: input,
-        userId: userId 
-      }
-    });
+    // Check if user is offline
+    const isOffline = !navigator.onLine;
     
-    if (error) {
-      console.error("Supabase function error:", error);
-      throw error;
+    let apiData = null;
+    let offlineMode = false;
+    
+    if (!isOffline) {
+      try {
+        // Call the Supabase Edge Function
+        const { data, error } = await supabase.functions.invoke('check-link', {
+          body: { 
+            input: input,
+            userId: userId 
+          }
+        });
+        
+        if (error) {
+          console.error("Supabase function error:", error);
+          throw error;
+        }
+        
+        console.log("Supabase function result:", data);
+        apiData = data;
+      } catch (error) {
+        console.error("API call failed, falling back to heuristic only:", error);
+        offlineMode = true;
+      }
+    } else {
+      console.log("User is offline, using heuristic analysis only");
+      offlineMode = true;
     }
     
-    console.log("Supabase function result:", data);
+    let scanResult: ScanResult;
     
-    // Combine API results with heuristic analysis
-    const combinedResults = combineAnalysis(data, heuristicAnalysis);
+    if (offlineMode || !apiData) {
+      // Fall back to heuristic analysis only
+      scanResult = {
+        url: input,
+        isSafe: heuristicAnalysis.riskLevel === 'low',
+        type: input.includes('@') ? 'email' : 'link',
+        threatDetails: `${isOffline ? '🔌 You are currently offline. ' : '⚠️ External verification temporarily unavailable. '}Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
+        warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
+        timestamp: new Date(),
+        riskScore: heuristicAnalysis.score,
+        heuristicScore: heuristicAnalysis.score,
+        heuristicRiskLevel: heuristicAnalysis.riskLevel,
+      };
+    } else {
+      // Combine API results with heuristic analysis
+      const combinedResults = combineAnalysis(apiData, heuristicAnalysis);
+      
+      // Transform the response to our ScanResult format with detailed information
+      scanResult = {
+        url: input,
+        isSafe: combinedResults.isSafe,
+        type: input.includes('@') ? 'email' : 'link',
+        threatDetails: combinedResults.combinedThreatDetails,
+        warningLevel: combinedResults.warningLevel,
+        timestamp: new Date(),
+        riskScore: combinedResults.riskScore,
+        phishing: apiData.phishing,
+        suspicious: apiData.suspicious,
+        spamming: apiData.spamming,
+        domainAge: apiData.domainAge,
+        country: apiData.country,
+        heuristicScore: heuristicAnalysis.score,
+        heuristicRiskLevel: heuristicAnalysis.riskLevel,
+      };
+    }
     
-    // Transform the response to our ScanResult format with detailed information
-    const scanResult: ScanResult = {
-      url: input,
-      isSafe: combinedResults.isSafe,
-      type: input.includes('@') ? 'email' : 'link',
-      threatDetails: combinedResults.combinedThreatDetails,
-      warningLevel: combinedResults.warningLevel,
-      timestamp: new Date(),
-      riskScore: combinedResults.riskScore,
-      phishing: data.phishing,
-      suspicious: data.suspicious,
-      spamming: data.spamming,
-      domainAge: data.domainAge,
-      country: data.country,
-      heuristicScore: heuristicAnalysis.score,
-      heuristicRiskLevel: heuristicAnalysis.riskLevel,
-    };
+    // Cache the result for consistent future checks
+    linkCache.set(input, scanResult);
     
     // Ensure animation plays for at least 2 seconds
     await ensureMinimumAnimationTime(startTime);
@@ -63,7 +110,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     // Fall back to heuristic analysis only when API fails
     const heuristicAnalysis = getSuspicionScore(input);
     
-    return {
+    const fallbackResult = {
       url: input,
       isSafe: heuristicAnalysis.riskLevel === 'low',
       type: input.includes('@') ? 'email' : 'link',
@@ -74,6 +121,11 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       heuristicScore: heuristicAnalysis.score,
       heuristicRiskLevel: heuristicAnalysis.riskLevel,
     };
+    
+    // Cache the fallback result too
+    linkCache.set(input, fallbackResult);
+    
+    return fallbackResult;
   }
 };
 
