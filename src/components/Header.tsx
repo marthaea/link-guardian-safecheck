@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Shield, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import BulkCheck from './BulkCheck';
 
 const Header = () => {
@@ -53,6 +54,12 @@ const Header = () => {
               >
                 Common Threats
               </button>
+              <Link 
+                to="/heuristics"
+                className="text-gray-300 hover:text-cyan-400 transition-colors"
+              >
+                Heuristics
+              </Link>
             </nav>
             <Button
               onClick={handleBulkCheckOpen}
@@ -93,6 +100,13 @@ const Header = () => {
               >
                 Common Threats
               </button>
+              <Link 
+                to="/heuristics"
+                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Heuristics
+              </Link>
               <Button
                 onClick={handleBulkCheckOpen}
                 variant="outline"

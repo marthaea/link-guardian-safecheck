@@ -11,7 +11,8 @@ const InstallButton = () => {
 
   useEffect(() => {
     // Check if PWA is already installed
-    setIsInstalled(isPWAInstalled());
+    const installed = isPWAInstalled();
+    setIsInstalled(installed);
     
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -29,11 +30,27 @@ const InstallButton = () => {
       setInstallPromptAvailable(false);
     };
 
+    // Listen for custom PWA events
+    const handlePWAInstallAvailable = () => {
+      console.log('PWA install available event received');
+      setInstallPromptAvailable(true);
+      setShowInstallButton(true);
+    };
+
+    const handlePWAInstalled = () => {
+      console.log('PWA installed event received');
+      setShowInstallButton(false);
+      setIsInstalled(true);
+      setInstallPromptAvailable(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('pwa-install-available', handlePWAInstallAvailable);
+    window.addEventListener('pwa-installed', handlePWAInstalled);
 
-    // Force show install button if not installed and browser supports PWA
-    const shouldShowButton = !isPWAInstalled() && 
+    // Show install button if PWA features are supported and not installed
+    const shouldShowButton = !installed && 
                             'serviceWorker' in navigator && 
                             (window.location.protocol === 'https:' || window.location.hostname === 'localhost');
     
@@ -45,6 +62,8 @@ const InstallButton = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('pwa-install-available', handlePWAInstallAvailable);
+      window.removeEventListener('pwa-installed', handlePWAInstalled);
     };
   }, []);
 
@@ -52,9 +71,9 @@ const InstallButton = () => {
     const userAgent = navigator.userAgent.toLowerCase();
     
     if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
-      return 'Chrome: Click the menu (⋮) → "Install Link Guardian"';
+      return 'Chrome: Look for the install icon (⬇️) in the address bar or click the menu (⋮) → "Install Link Guardian"';
     } else if (userAgent.includes('edg')) {
-      return 'Edge: Click the menu (⋯) → "Apps" → "Install this site as an app"';
+      return 'Edge: Look for the install icon (⬇️) in the address bar or click the menu (⋯) → "Apps" → "Install this site as an app"';
     } else if (userAgent.includes('firefox')) {
       return 'Firefox: Click the menu (☰) → "Install" or look for the install icon in the address bar';
     } else if (userAgent.includes('safari')) {
@@ -71,21 +90,19 @@ const InstallButton = () => {
       } else {
         // Show manual installation instructions
         const instructions = getBrowserInstructions();
-        const message = `To install Link Guardian as an app:\n\n${instructions}\n\nOr look for an install icon (⬇️) in your browser's address bar.`;
+        const message = `To install Link Guardian as an app:\n\n${instructions}\n\nThis app meets PWA standards and should be installable in your browser.`;
         alert(message);
       }
     } catch (error) {
       console.log('Install prompt not available, showing manual instructions');
       const instructions = getBrowserInstructions();
-      const message = `To install Link Guardian as an app:\n\n${instructions}\n\nOr look for an install icon (⬇️) in your browser's address bar.`;
+      const message = `To install Link Guardian as an app:\n\n${instructions}\n\nThis app meets PWA standards and should be installable in your browser.`;
       alert(message);
     }
   };
 
-  // Always show button if not installed (except on iOS Safari where PWA install is different)
-  const shouldShow = !isInstalled && showInstallButton;
-
-  if (!shouldShow) {
+  // Show button if not installed and PWA features are supported
+  if (isInstalled) {
     return null;
   }
 
