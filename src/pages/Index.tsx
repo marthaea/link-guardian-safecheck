@@ -54,7 +54,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-cyan-100">
-      <ReviewsSection />
       <Header />
       
       <main className="flex-1">
@@ -68,6 +67,8 @@ const Index = () => {
         <HowItWorksSection />
         
         <CommonThreatsSection onScrollToCheck={scrollToCheck} />
+        
+        <ReviewsSection />
       </main>
       
       <Footer />
