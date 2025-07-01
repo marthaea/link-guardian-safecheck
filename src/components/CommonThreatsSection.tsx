@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Mail, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ interface CommonThreatsSectionProps {
 
 const CommonThreatsSection: React.FC<CommonThreatsSectionProps> = ({ onScrollToCheck }) => {
   return (
-    <section id="about" className="py-16 bg-gray-900/80 backdrop-blur-sm">
+    <section id="threats" className="py-16 bg-gray-900/80 backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-cyan-300">Common Online Threats</h2>
         <p className="text-center text-cyan-100/80 max-w-2xl mx-auto mb-12 px-4">
@@ -17,6 +16,7 @@ const CommonThreatsSection: React.FC<CommonThreatsSectionProps> = ({ onScrollToC
         </p>
         
         <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-6">
+          
           <div className="bg-gray-800/60 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-cyan-800/30">
             <h3 className="text-xl font-medium mb-2 flex items-center gap-2 text-cyan-200">
               <LinkIcon className="h-5 w-5 text-cyan-400" />

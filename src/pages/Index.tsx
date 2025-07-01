@@ -56,7 +56,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-gray-900 text-cyan-100">
       <Header />
       
-      <main className="flex-1">
+      <main className="flex-1 pt-20">
         <HeroSection 
           isLoading={isLoading}
           result={result}
