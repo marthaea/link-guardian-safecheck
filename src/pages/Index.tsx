@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import HowItWorksSection from '@/components/HowItWorksSection';
 import CommonThreatsSection from '@/components/CommonThreatsSection';
+import ReviewsSection from '@/components/ReviewsSection';
 import { ScanResult } from '@/components/ScanResults';
 import { checkLink } from '@/utils/linkChecker';
 import { toast } from '@/hooks/use-toast';
@@ -53,6 +54,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-cyan-100">
+      <ReviewsSection />
       <Header />
       
       <main className="flex-1">

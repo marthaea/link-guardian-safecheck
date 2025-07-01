@@ -2,50 +2,104 @@ export const getSuspicionScore = (url: string) => {
   let score = 0;
   let factors: string[] = [];
   
-  // Check for common URL shortening services
-  if (/(bit\.ly|goo\.gl|t\.co|tinyurl|ow\.ly|is\.gd|buff\.ly|adf\.ly|ity\.im)/i.test(url)) {
-    score += 20;
-    factors.push('URL shortening service used');
-  }
+  // Normalize URL for analysis
+  const normalizedUrl = url.toLowerCase();
   
-  // Check for IP address instead of domain
-  if (/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(url)) {
-    score += 30;
-    factors.push('IP address used instead of domain');
-  }
-  
-  // Check for unusual domain extensions
-  if (/\.(top|tk|xyz|bid|loan|win|club|site|date)/i.test(url)) {
-    score += 15;
-    factors.push('Unusual domain extension');
-  }
-  
-  // Check for multiple redirects
-  // This is difficult to implement on the client-side without making actual HTTP requests,
-  // which could be slow and potentially risky. It's better to handle this server-side.
-  
-  // Check for HTTPS mismatch (if the site redirects from HTTPS to HTTP)
-  if (url.startsWith('https://') && url.replace(/^https:\/\//i, '').startsWith('http://')) {
+  // Check for common URL shortening services (High Risk)
+  if (/(bit\.ly|goo\.gl|t\.co|tinyurl|ow\.ly|is\.gd|buff\.ly|adf\.ly|ity\.im|short\.link|rebrand\.ly)/i.test(url)) {
     score += 25;
-    factors.push('HTTPS to HTTP redirect');
+    factors.push('URL shortening service detected');
   }
   
-  // Check for suspicious characters in the URL
-  if (/[<>"{}`|\\^~[\]';]/i.test(url)) {
-    score += 10;
+  // Check for IP address instead of domain (Very High Risk)
+  if (/^https?:\/\/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/.test(url)) {
+    score += 35;
+    factors.push('IP address used instead of domain name');
+  }
+  
+  // Check for suspicious domain extensions (Medium Risk)
+  if (/\.(tk|ml|ga|cf|top|xyz|bid|loan|win|club|site|date|click|download|info|biz|work|review|country|stream|gq)/i.test(url)) {
+    score += 20;
+    factors.push('Suspicious domain extension');
+  }
+  
+  // Check for URL with excessive subdomains (Medium Risk)
+  const domainParts = url.replace(/^https?:\/\//, '').split('/')[0].split('.');
+  if (domainParts.length > 4) {
+    score += 15;
+    factors.push('Excessive subdomains detected');
+  }
+  
+  // Check for suspicious characters in URL (Low-Medium Risk)
+  if (/[<>"{}`|\\^~[\]';%]/i.test(url)) {
+    score += 12;
     factors.push('Suspicious characters in URL');
   }
   
-  // Check for long URLs
+  // Check for very long URLs (Low Risk)
   if (url.length > 200) {
-    score += 10;
-    factors.push('Long URL');
+    score += 8;
+    factors.push('Unusually long URL');
+  } else if (url.length > 100) {
+    score += 4;
+    factors.push('Long URL detected');
   }
   
-  // Check for numbers in domain
-  if (/[0-9]/i.test(url)) {
+  // Check for excessive numbers in domain (Low Risk)
+  const domainSection = url.replace(/^https?:\/\//, '').split('/')[0];
+  const numberCount = (domainSection.match(/[0-9]/g) || []).length;
+  if (numberCount > 3) {
+    score += 10;
+    factors.push('Multiple numbers in domain');
+  } else if (numberCount > 1) {
     score += 5;
-    factors.push('Numbers in domain');
+    factors.push('Numbers present in domain');
+  }
+  
+  // Check for URL encoded characters (Medium Risk)
+  if (/%[0-9a-f]{2}/i.test(url)) {
+    score += 15;
+    factors.push('URL encoded characters detected');
+  }
+  
+  // Check for suspicious keywords (High Risk)
+  const suspiciousKeywords = ['secure', 'update', 'verify', 'confirm', 'account', 'login', 'banking', 'paypal', 'amazon', 'microsoft', 'google', 'apple', 'urgent', 'suspended', 'expired'];
+  const foundKeywords = suspiciousKeywords.filter(keyword => normalizedUrl.includes(keyword));
+  if (foundKeywords.length > 0) {
+    score += foundKeywords.length * 8;
+    factors.push(`Suspicious keywords found: ${foundKeywords.join(', ')}`);
+  }
+  
+  // Check for homograph attacks (look-alike characters)
+  if (/[а-я]|[αβγδεζηθικλμνξοπρστυφχψω]|[аеорстих]/i.test(url)) {
+    score += 30;
+    factors.push('Potentially deceptive characters detected');
+  }
+  
+  // Check for HTTPS vs HTTP mismatch patterns
+  if (url.startsWith('http://') && !url.includes('localhost')) {
+    score += 10;
+    factors.push('Non-secure HTTP protocol used');
+  }
+  
+  // Check for suspicious path patterns
+  if (/\/(admin|wp-admin|login|signin|account|banking|secure|update|verify)/i.test(url)) {
+    score += 12;
+    factors.push('Suspicious path pattern detected');
+  }
+  
+  // Check for multiple redirects indicators
+  if (/redirect|forward|goto|link|url=/i.test(url)) {
+    score += 18;
+    factors.push('Potential redirect mechanism detected');
+  }
+  
+  // Bonus points for well-known safe domains
+  const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'github.com', 'stackoverflow.com', 'wikipedia.org'];
+  const isSafeDomain = safeDomains.some(domain => normalizedUrl.includes(domain));
+  if (isSafeDomain) {
+    score = Math.max(0, score - 20);
+    factors.push('Recognized safe domain');
   }
   
   // Normalize the score between 0 and 100
@@ -60,11 +114,11 @@ export const getSuspicionScore = (url: string) => {
   
   let explanation = '';
   if (riskLevel === 'high') {
-    explanation = 'This link has several characteristics commonly associated with malicious content. Exercise extreme caution.';
+    explanation = 'This link has multiple characteristics commonly associated with malicious content. Exercise extreme caution and avoid clicking.';
   } else if (riskLevel === 'medium') {
-    explanation = 'This link has some suspicious characteristics. Be cautious and verify the source before proceeding.';
+    explanation = 'This link has some suspicious characteristics. Be cautious, verify the source, and avoid entering sensitive information.';
   } else {
-    explanation = 'This link appears to be safe, but always exercise caution when visiting unfamiliar websites.';
+    explanation = 'This link appears to have low risk based on our analysis, but always exercise caution when visiting unfamiliar websites.';
   }
   
   return {

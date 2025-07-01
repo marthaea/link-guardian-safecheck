@@ -4,6 +4,7 @@ import { Shield, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import BulkCheck from './BulkCheck';
+import InstallButton from './InstallButton';
 
 const Header = () => {
   const [showBulkCheck, setShowBulkCheck] = useState(false);
@@ -31,7 +32,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700">
+    <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center">
@@ -40,39 +41,42 @@ const Header = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-6">
             <nav className="flex space-x-6">
               <button 
                 onClick={() => scrollToSection('how-it-works')}
-                className="text-gray-300 hover:text-cyan-400 transition-colors"
+                className="text-gray-300 hover:text-cyan-400 transition-colors font-medium"
               >
                 How It Works
               </button>
               <button 
                 onClick={() => scrollToSection('threats')}
-                className="text-gray-300 hover:text-cyan-400 transition-colors"
+                className="text-gray-300 hover:text-cyan-400 transition-colors font-medium"
               >
                 Common Threats
               </button>
               <Link 
                 to="/heuristics"
-                className="text-gray-300 hover:text-cyan-400 transition-colors"
+                className="text-gray-300 hover:text-cyan-400 transition-colors font-medium"
               >
                 Heuristics
               </Link>
             </nav>
-            <Button
-              onClick={handleBulkCheckOpen}
-              variant="outline"
-              size="sm"
-              className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-gray-900"
-            >
-              Bulk Check
-            </Button>
+            <div className="flex items-center space-x-3">
+              <InstallButton />
+              <Button
+                onClick={handleBulkCheckOpen}
+                variant="outline"
+                size="sm"
+                className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-gray-900"
+              >
+                Bulk Check
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden">
+          <div className="md:hidden">
             <Button
               onClick={toggleMobileMenu}
               variant="ghost"
@@ -86,35 +90,38 @@ const Header = () => {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-700 py-4">
+          <div className="md:hidden border-t border-gray-700 py-4">
             <nav className="flex flex-col space-y-3">
               <button 
                 onClick={() => scrollToSection('how-it-works')}
-                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2"
+                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2 font-medium"
               >
                 How It Works
               </button>
               <button 
                 onClick={() => scrollToSection('threats')}
-                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2"
+                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2 font-medium"
               >
                 Common Threats
               </button>
               <Link 
                 to="/heuristics"
-                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2"
+                className="text-left text-gray-300 hover:text-cyan-400 transition-colors py-2 font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Heuristics
               </Link>
-              <Button
-                onClick={handleBulkCheckOpen}
-                variant="outline"
-                size="sm"
-                className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-gray-900 w-full justify-start"
-              >
-                Bulk Check
-              </Button>
+              <div className="flex flex-col space-y-2 pt-2">
+                <InstallButton />
+                <Button
+                  onClick={handleBulkCheckOpen}
+                  variant="outline"
+                  size="sm"
+                  className="text-cyan-400 border-cyan-400 hover:bg-cyan-400 hover:text-gray-900 justify-start"
+                >
+                  Bulk Check
+                </Button>
+              </div>
             </nav>
           </div>
         )}
