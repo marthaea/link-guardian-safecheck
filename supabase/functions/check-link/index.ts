@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -28,11 +27,11 @@ serve(async (req) => {
   }
 
   try {
-    // Extract API keys from environment variables
-    const IPQS_API_KEY = Deno.env.get("IPQS_API_KEY") || "019808ba-01c4-7508-80c2-b3f2dc686cc6";
+    // Use the API key you provided as the primary key
+    const IPQS_API_KEY = "019808ba-01c4-7508-80c2-b3f2dc686cc6";
     const VIRUS_TOTAL_API_KEY = Deno.env.get("VIRUS_TOTAL_API_KEY");
     
-    console.log("API Keys - IPQS:", IPQS_API_KEY ? "Present" : "Missing", "VT:", VIRUS_TOTAL_API_KEY ? "Present" : "Missing");
+    console.log("API Keys - IPQS:", "Present", "VT:", VIRUS_TOTAL_API_KEY ? "Present" : "Missing");
     
     // Parse request
     const { input, userId } = await req.json();
@@ -135,6 +134,7 @@ serve(async (req) => {
     let ipqsData = null;
     if (ipqsResult.status === 'fulfilled') {
       ipqsData = ipqsResult.value;
+      console.log("IPQS Analysis successful:", ipqsData);
     } else {
       console.error("IPQS Analysis failed:", ipqsResult.reason);
     }
@@ -143,6 +143,7 @@ serve(async (req) => {
     let vtData = null;
     if (vtResult.status === 'fulfilled') {
       vtData = vtResult.value;
+      console.log("VirusTotal Analysis successful:", vtData);
     } else {
       console.error("VirusTotal Analysis failed:", vtResult.reason);
     }
