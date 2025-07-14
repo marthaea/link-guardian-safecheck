@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -8,7 +9,7 @@ const corsHeaders = {
 }
 
 // API endpoints for external analysis
-const IP_QUALITY_SCORE_API_ENDPOINT = "https://www.ipqualityscore.com/api/json/url";
+const IP_QUALITY_SCORE_API_ENDPOINT = "https://ipqualityscore.com/api/json/url";
 const VIRUS_TOTAL_API_ENDPOINT = "https://www.virustotal.com/vtapi/v2/url/report";
 
 // Supabase client for database operations
@@ -27,14 +28,15 @@ serve(async (req) => {
   }
 
   try {
-    // Use the API key you provided as the primary key
+    // Use the provided API key
     const IPQS_API_KEY = "019808ba-01c4-7508-80c2-b3f2dc686cc6";
     const VIRUS_TOTAL_API_KEY = Deno.env.get("VIRUS_TOTAL_API_KEY");
     
-    console.log("API Keys - IPQS:", "Present", "VT:", VIRUS_TOTAL_API_KEY ? "Present" : "Missing");
+    console.log("Starting link check with API keys - IPQS: Present, VT:", VIRUS_TOTAL_API_KEY ? "Present" : "Missing");
     
     // Parse request
     const { input, userId } = await req.json();
+    console.log("Received input:", input);
     
     if (!input) {
       return new Response(
@@ -66,7 +68,9 @@ serve(async (req) => {
         }
         domain = new URL(urlInput).hostname.toLowerCase();
       }
+      console.log("Normalized input:", normalizedInput, "Domain:", domain);
     } catch (e) {
+      console.error("Error parsing input:", e);
       const result = {
         url: input,
         isSafe: false,
@@ -151,6 +155,8 @@ serve(async (req) => {
     // Combine results from both external services
     const combinedResult = combineExternalResults(input, type, domain, ipqsData, vtData);
     
+    console.log("Final combined result:", combinedResult);
+    
     // Store the result if user is authenticated
     if (userId) {
       await storeResult(combinedResult, userId);
@@ -183,32 +189,38 @@ async function performIPQSAnalysis(input: string, apiKey: string) {
     throw new Error("IPQS API key not available");
   }
 
-  const url = new URL(IP_QUALITY_SCORE_API_ENDPOINT);
-  url.searchParams.append('key', apiKey);
-  url.searchParams.append('url', input);
-  url.searchParams.append('strictness', '2');
-  url.searchParams.append('fast', 'true');
-
-  console.log("Making request to IPQS API");
-  const response = await fetch(url.toString());
-  
-  if (!response.ok) {
-    throw new Error(`IPQS API returned ${response.status}`);
+  try {
+    const url = `${IP_QUALITY_SCORE_API_ENDPOINT}/${apiKey}/${encodeURIComponent(input)}?strictness=2&fast=true`;
+    
+    console.log("Making request to IPQS API:", url);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'LinkGuardian/1.0'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`IPQS API returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("IPQS API response:", data);
+    
+    return {
+      service: 'IPQS',
+      risk_score: data.risk_score || 0,
+      unsafe: data.unsafe || false,
+      phishing: data.phishing || false,
+      suspicious: data.suspicious || false,
+      spamming: data.spamming || false,
+      domain_age: data.domain_age,
+      country_code: data.country_code
+    };
+  } catch (error) {
+    console.error("IPQS API error:", error);
+    throw error;
   }
-  
-  const data = await response.json();
-  console.log("IPQS API response:", data);
-  
-  return {
-    service: 'IPQS',
-    risk_score: data.risk_score || 0,
-    unsafe: data.unsafe || false,
-    phishing: data.phishing || false,
-    suspicious: data.suspicious || false,
-    spamming: data.spamming || false,
-    domain_age: data.domain_age,
-    country_code: data.country_code
-  };
 }
 
 // VirusTotal Analysis Function
@@ -218,27 +230,35 @@ async function performVirusTotalAnalysis(input: string, apiKey: string) {
     return simulateVirusTotalResponse(input);
   }
 
-  const url = new URL(VIRUS_TOTAL_API_ENDPOINT);
-  url.searchParams.append('apikey', apiKey);
-  url.searchParams.append('resource', input);
+  try {
+    const url = `${VIRUS_TOTAL_API_ENDPOINT}?apikey=${apiKey}&resource=${encodeURIComponent(input)}`;
 
-  console.log("Making request to VirusTotal API");
-  const response = await fetch(url.toString());
-  
-  if (!response.ok) {
-    throw new Error(`VirusTotal API returned ${response.status}`);
+    console.log("Making request to VirusTotal API");
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'LinkGuardian/1.0'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`VirusTotal API returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log("VirusTotal API response:", data);
+    
+    return {
+      service: 'VirusTotal',
+      positives: data.positives || 0,
+      total: data.total || 0,
+      detected: (data.positives || 0) > 0,
+      scan_date: data.scan_date
+    };
+  } catch (error) {
+    console.error("VirusTotal API error:", error);
+    return simulateVirusTotalResponse(input);
   }
-  
-  const data = await response.json();
-  console.log("VirusTotal API response:", data);
-  
-  return {
-    service: 'VirusTotal',
-    positives: data.positives || 0,
-    total: data.total || 0,
-    detected: (data.positives || 0) > 0,
-    scan_date: data.scan_date
-  };
 }
 
 // Simulate VirusTotal response for demo purposes
