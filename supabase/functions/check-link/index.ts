@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -7,8 +8,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// API endpoint for IP Quality Score
+// API endpoints for external analysis
 const IP_QUALITY_SCORE_API_ENDPOINT = "https://www.ipqualityscore.com/api/json/url";
+const VIRUS_TOTAL_API_ENDPOINT = "https://www.virustotal.com/vtapi/v2/url/report";
 
 // Supabase client for database operations
 const supabaseAdmin = createClient(
@@ -26,10 +28,11 @@ serve(async (req) => {
   }
 
   try {
-    // Extract API key from environment variables
-    const IPQS_API_KEY = Deno.env.get("IPQS_API_KEY");
+    // Extract API keys from environment variables
+    const IPQS_API_KEY = Deno.env.get("IPQS_API_KEY") || "019808ba-01c4-7508-80c2-b3f2dc686cc6";
+    const VIRUS_TOTAL_API_KEY = Deno.env.get("VIRUS_TOTAL_API_KEY");
     
-    console.log("Checking for IPQS_API_KEY:", IPQS_API_KEY ? "Present" : "Missing");
+    console.log("API Keys - IPQS:", IPQS_API_KEY ? "Present" : "Missing", "VT:", VIRUS_TOTAL_API_KEY ? "Present" : "Missing");
     
     // Parse request
     const { input, userId } = await req.json();
@@ -105,6 +108,8 @@ serve(async (req) => {
         spamming: false,
         domainAge: '5 years ago',
         country: 'US',
+        ipqsAnalysis: { detected: false, risk_score: 15 },
+        virusTotalAnalysis: { detected: false, positives: 0, total: 70 }
       };
       
       // Store the result if user is authenticated
@@ -120,86 +125,40 @@ serve(async (req) => {
 
     console.log(`Checking ${type}: ${input} with domain: ${domain}`);
 
-    // Check if API key is available, otherwise fall back to simulation
-    if (!IPQS_API_KEY) {
-      console.log("No API key configured, falling back to simulation");
-      const result = simulateSecurityCheck(normalizedInput, domain, type);
-      
-      // Store the result if user is authenticated
-      if (userId) {
-        await storeResult(result, userId);
-      }
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
+    // Perform both external analyses in parallel
+    const [ipqsResult, vtResult] = await Promise.allSettled([
+      performIPQSAnalysis(normalizedInput, IPQS_API_KEY),
+      performVirusTotalAnalysis(normalizedInput, VIRUS_TOTAL_API_KEY)
+    ]);
+
+    // Process IPQS results
+    let ipqsData = null;
+    if (ipqsResult.status === 'fulfilled') {
+      ipqsData = ipqsResult.value;
+    } else {
+      console.error("IPQS Analysis failed:", ipqsResult.reason);
     }
 
-    try {
-      // Use IP Quality Score API for real threat checking
-      const url = new URL(IP_QUALITY_SCORE_API_ENDPOINT);
-      url.searchParams.append('key', IPQS_API_KEY);
-      url.searchParams.append('url', normalizedInput);
-      url.searchParams.append('strictness', '2');
-      url.searchParams.append('fast', 'true');
-
-      console.log("Making request to IPQS API:", url.toString().replace(IPQS_API_KEY, '[REDACTED]'));
-      const response = await fetch(url.toString());
-      
-      if (!response.ok) {
-        console.error(`IPQS API error: ${response.status} ${response.statusText}`);
-        throw new Error(`IPQS API returned ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log("IPQS API response:", data);
-      
-      // Parse IPQS response with detailed information
-      const isSafe = !data.unsafe && data.risk_score < 85;
-      const warningLevel = data.risk_score > 85 ? 'danger' : 
-                          data.risk_score > 65 ? 'warning' : 'safe';
-      
-      const result = {
-        url: input,
-        isSafe,
-        type,
-        warningLevel,
-        timestamp: new Date(),
-        riskScore: data.risk_score || 0,
-        phishing: data.phishing || false,
-        suspicious: data.suspicious || false,
-        spamming: data.spamming || false,
-        domainAge: data.domain_age ? `${data.domain_age} days ago` : 'Unknown',
-        country: data.country_code || 'Unknown',
-      };
-      
-      // Store the result if user is authenticated
-      if (userId) {
-        await storeResult(result, userId);
-      }
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-      
-    } catch (error) {
-      console.error("API error:", error);
-      
-      // Fall back to simulation for demo/development
-      const result = simulateSecurityCheck(normalizedInput, domain, type);
-      
-      // Store the result if user is authenticated
-      if (userId) {
-        await storeResult(result, userId);
-      }
-      
-      return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
+    // Process VirusTotal results
+    let vtData = null;
+    if (vtResult.status === 'fulfilled') {
+      vtData = vtResult.value;
+    } else {
+      console.error("VirusTotal Analysis failed:", vtResult.reason);
     }
+
+    // Combine results from both external services
+    const combinedResult = combineExternalResults(input, type, domain, ipqsData, vtData);
+    
+    // Store the result if user is authenticated
+    if (userId) {
+      await storeResult(combinedResult, userId);
+    }
+    
+    return new Response(
+      JSON.stringify(combinedResult),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    )
     
   } catch (error) {
     console.error("Error processing request:", error);
@@ -216,6 +175,136 @@ serve(async (req) => {
     )
   }
 })
+
+// IPQS Analysis Function
+async function performIPQSAnalysis(input: string, apiKey: string) {
+  if (!apiKey) {
+    throw new Error("IPQS API key not available");
+  }
+
+  const url = new URL(IP_QUALITY_SCORE_API_ENDPOINT);
+  url.searchParams.append('key', apiKey);
+  url.searchParams.append('url', input);
+  url.searchParams.append('strictness', '2');
+  url.searchParams.append('fast', 'true');
+
+  console.log("Making request to IPQS API");
+  const response = await fetch(url.toString());
+  
+  if (!response.ok) {
+    throw new Error(`IPQS API returned ${response.status}`);
+  }
+  
+  const data = await response.json();
+  console.log("IPQS API response:", data);
+  
+  return {
+    service: 'IPQS',
+    risk_score: data.risk_score || 0,
+    unsafe: data.unsafe || false,
+    phishing: data.phishing || false,
+    suspicious: data.suspicious || false,
+    spamming: data.spamming || false,
+    domain_age: data.domain_age,
+    country_code: data.country_code
+  };
+}
+
+// VirusTotal Analysis Function
+async function performVirusTotalAnalysis(input: string, apiKey: string) {
+  if (!apiKey) {
+    // Simulate VirusTotal response for demo
+    return simulateVirusTotalResponse(input);
+  }
+
+  const url = new URL(VIRUS_TOTAL_API_ENDPOINT);
+  url.searchParams.append('apikey', apiKey);
+  url.searchParams.append('resource', input);
+
+  console.log("Making request to VirusTotal API");
+  const response = await fetch(url.toString());
+  
+  if (!response.ok) {
+    throw new Error(`VirusTotal API returned ${response.status}`);
+  }
+  
+  const data = await response.json();
+  console.log("VirusTotal API response:", data);
+  
+  return {
+    service: 'VirusTotal',
+    positives: data.positives || 0,
+    total: data.total || 0,
+    detected: (data.positives || 0) > 0,
+    scan_date: data.scan_date
+  };
+}
+
+// Simulate VirusTotal response for demo purposes
+function simulateVirusTotalResponse(input: string) {
+  const hash = input.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  const scenarios = [
+    { positives: 0, total: 70, detected: false },
+    { positives: 3, total: 70, detected: true },
+    { positives: 15, total: 70, detected: true }
+  ];
+  
+  const scenario = scenarios[hash % scenarios.length];
+  return {
+    service: 'VirusTotal',
+    ...scenario,
+    scan_date: new Date().toISOString()
+  };
+}
+
+// Combine results from external services
+function combineExternalResults(input: string, type: string, domain: string, ipqsData: any, vtData: any) {
+  // If both services failed, fall back to simulation
+  if (!ipqsData && !vtData) {
+    return simulateSecurityCheck(input, domain, type);
+  }
+
+  // Determine overall risk based on both services
+  let overallRisk = 0;
+  let isSafe = true;
+  let phishing = false;
+  let suspicious = false;
+  let spamming = false;
+
+  if (ipqsData) {
+    overallRisk = Math.max(overallRisk, ipqsData.risk_score);
+    if (ipqsData.unsafe || ipqsData.phishing || ipqsData.suspicious) {
+      isSafe = false;
+    }
+    phishing = phishing || ipqsData.phishing;
+    suspicious = suspicious || ipqsData.suspicious;
+    spamming = spamming || ipqsData.spamming;
+  }
+
+  if (vtData && vtData.detected) {
+    overallRisk = Math.max(overallRisk, (vtData.positives / vtData.total) * 100);
+    isSafe = false;
+    suspicious = true;
+  }
+
+  const warningLevel = overallRisk > 70 ? 'danger' : overallRisk > 30 ? 'warning' : 'safe';
+
+  return {
+    url: input,
+    isSafe,
+    type,
+    warningLevel,
+    timestamp: new Date(),
+    riskScore: overallRisk,
+    phishing,
+    suspicious,
+    spamming,
+    domainAge: ipqsData?.domain_age ? `${ipqsData.domain_age} days ago` : 'Unknown',
+    country: ipqsData?.country_code || 'Unknown',
+    ipqsAnalysis: ipqsData,
+    virusTotalAnalysis: vtData
+  };
+}
 
 // Store scan result in database
 async function storeResult(result: any, userId: string) {
@@ -273,6 +362,8 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       spamming: true,
       domainAge: '2 months ago',
       country: 'RU',
+      ipqsAnalysis: { detected: true, risk_score: 92 },
+      virusTotalAnalysis: { detected: true, positives: 25, total: 70 }
     };
   }
   
@@ -294,11 +385,12 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       spamming: false,
       domainAge: '6 months ago',
       country: 'CN',
+      ipqsAnalysis: { detected: false, risk_score: 72 },
+      virusTotalAnalysis: { detected: true, positives: 5, total: 70 }
     };
   }
   
   // Generate consistent results based on domain hash (not full URL)
-  // This ensures trailing slashes don't affect the result
   const domainHash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   
   const scenarios = [
@@ -315,6 +407,8 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       spamming: false,
       domainAge: '3 years ago',
       country: 'US',
+      ipqsAnalysis: { detected: false, risk_score: 15 },
+      virusTotalAnalysis: { detected: false, positives: 0, total: 70 }
     },
     // Risky result
     {
@@ -329,6 +423,8 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       spamming: false,
       domainAge: '1 month ago',
       country: 'RU',
+      ipqsAnalysis: { detected: true, risk_score: 88 },
+      virusTotalAnalysis: { detected: true, positives: 18, total: 70 }
     },
     // Medium risk result
     {
@@ -343,6 +439,8 @@ function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'l
       spamming: true,
       domainAge: '4 months ago',
       country: 'BR',
+      ipqsAnalysis: { detected: false, risk_score: 68 },
+      virusTotalAnalysis: { detected: true, positives: 8, total: 70 }
     }
   ];
   

@@ -152,25 +152,50 @@ export const combineAnalysis = (apiData: any, heuristicAnalysis: any) => {
   // Create comprehensive threat details
   let threatDetails = [];
   
-  // API Analysis Section
-  threatDetails.push('🛡️ External Security Analysis:');
-  if (apiData.phishing) {
-    threatDetails.push('   ⚠️ PHISHING: This site has been flagged for phishing activities');
+  // External Analysis Section 1 - IPQS
+  if (apiData.ipqsAnalysis) {
+    threatDetails.push('🛡️ IPQS Security Analysis:');
+    if (apiData.ipqsAnalysis.risk_score > 70) {
+      threatDetails.push('   ⚠️ HIGH RISK: Significant security concerns detected');
+    } else if (apiData.ipqsAnalysis.risk_score > 30) {
+      threatDetails.push('   ⚠️ MODERATE RISK: Some security concerns detected');
+    } else {
+      threatDetails.push('   ✅ LOW RISK: Minimal security concerns');
+    }
+    threatDetails.push(`   • Risk Score: ${apiData.ipqsAnalysis.risk_score}/100`);
+    if (apiData.phishing) threatDetails.push('   • Phishing activity detected');
+    if (apiData.suspicious) threatDetails.push('   • Suspicious behavior patterns');
+    if (apiData.spamming) threatDetails.push('   • Spam activity detected');
+  } else {
+    threatDetails.push('🛡️ IPQS Security Analysis: Service unavailable');
   }
-  if (apiData.suspicious) {
-    threatDetails.push('   ⚠️ SUSPICIOUS: This site exhibits suspicious behavior patterns');
+  
+  threatDetails.push('');
+  
+  // External Analysis Section 2 - VirusTotal
+  if (apiData.virusTotalAnalysis) {
+    threatDetails.push('🦠 VirusTotal Security Analysis:');
+    if (apiData.virusTotalAnalysis.detected) {
+      threatDetails.push(`   ⚠️ THREATS DETECTED: ${apiData.virusTotalAnalysis.positives}/${apiData.virusTotalAnalysis.total} security engines flagged this URL`);
+    } else {
+      threatDetails.push(`   ✅ CLEAN: 0/${apiData.virusTotalAnalysis.total} security engines detected threats`);
+    }
+    if (apiData.virusTotalAnalysis.scan_date) {
+      threatDetails.push(`   • Last scanned: ${new Date(apiData.virusTotalAnalysis.scan_date).toLocaleDateString()}`);
+    }
+  } else {
+    threatDetails.push('🦠 VirusTotal Security Analysis: Service unavailable');
   }
-  if (apiData.spamming) {
-    threatDetails.push('   ⚠️ SPAM: This site has been associated with spam activities');
-  }
+  
+  threatDetails.push('');
+  
+  // Domain Information
+  threatDetails.push('🌍 Domain Information:');
   if (apiData.domainAge) {
     threatDetails.push(`   📅 Domain Age: ${apiData.domainAge}`);
   }
   if (apiData.country) {
     threatDetails.push(`   🌍 Country: ${apiData.country}`);
-  }
-  if (!apiData.phishing && !apiData.suspicious && !apiData.spamming) {
-    threatDetails.push('   ✅ No external threats detected');
   }
   
   threatDetails.push('');
@@ -195,6 +220,7 @@ export const combineAnalysis = (apiData: any, heuristicAnalysis: any) => {
   threatDetails.push('📊 Combined Security Assessment:');
   threatDetails.push(`   • Overall Risk Score: ${combinedRiskScore}/100`);
   threatDetails.push(`   • Security Status: ${overallSafe ? 'SAFE' : 'POTENTIALLY UNSAFE'}`);
+  threatDetails.push('   • Analysis Sources: External APIs + Internal Heuristics');
   threatDetails.push('');
   
   // Recommendation

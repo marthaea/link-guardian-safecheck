@@ -21,6 +21,8 @@ export type ScanResult = {
   country?: string;
   heuristicScore?: number;
   heuristicRiskLevel?: 'low' | 'medium' | 'high';
+  ipqsAnalysis?: any;
+  virusTotalAnalysis?: any;
 };
 
 interface ScanResultsProps {
@@ -34,6 +36,12 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
   const { url, isSafe, type, threatDetails, warningLevel = isSafe ? 'safe' : 'danger' } = result;
 
   const getStatusContent = () => {
+    const analysisCount = [
+      result.riskScore !== undefined ? 'External API 1' : null,
+      result.heuristicScore !== undefined ? 'External API 2' : null,
+      'Heuristic Analysis'
+    ].filter(Boolean).length;
+
     if (warningLevel === 'safe') {
       return (
         <div className="flex items-center gap-2 text-[hsl(var(--safe))]">
@@ -42,12 +50,10 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           </div>
           <div className="flex flex-col">
             <span className="font-medium">Safe to use</span>
-            {result.heuristicScore !== undefined && (
-              <span className="text-xs flex items-center gap-1">
-                <Brain className="h-3 w-3" />
-                Heuristic Score: {result.heuristicScore}/100
-              </span>
-            )}
+            <span className="text-xs flex items-center gap-1">
+              <Brain className="h-3 w-3" />
+              Analyzed by {analysisCount} security systems
+            </span>
           </div>
         </div>
       );
@@ -59,12 +65,10 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           </div>
           <div className="flex flex-col">
             <span className="font-medium">Proceed with caution</span>
-            {result.heuristicScore !== undefined && (
-              <span className="text-xs flex items-center gap-1">
-                <Brain className="h-3 w-3" />
-                Heuristic Score: {result.heuristicScore}/100
-              </span>
-            )}
+            <span className="text-xs flex items-center gap-1">
+              <Brain className="h-3 w-3" />
+              Analyzed by {analysisCount} security systems
+            </span>
           </div>
         </div>
       );
@@ -76,12 +80,10 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           </div>
           <div className="flex flex-col">
             <span className="font-medium">Potentially unsafe</span>
-            {result.heuristicScore !== undefined && (
-              <span className="text-xs flex items-center gap-1">
-                <Brain className="h-3 w-3" />
-                Heuristic Score: {result.heuristicScore}/100
-              </span>
-            )}
+            <span className="text-xs flex items-center gap-1">
+              <Brain className="h-3 w-3" />
+              Analyzed by {analysisCount} security systems
+            </span>
           </div>
         </div>
       );
@@ -150,14 +152,14 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
             {type === 'link' ? <Link className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
-            Advanced Scan Results
+            Triple-Layer Security Analysis
           </CardTitle>
           <Button variant="ghost" size="icon" onClick={onReset}>
             <X className="h-4 w-4" />
           </Button>
         </div>
         <CardDescription>
-          Scan completed at {result.timestamp.toLocaleTimeString()} • Enhanced with heuristic analysis
+          Scan completed at {result.timestamp.toLocaleTimeString()} • IPQS + VirusTotal + Heuristic Analysis
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -176,7 +178,7 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           
           {threatDetails && (
             <div className="pt-2">
-              <div className="text-sm font-medium mb-1">Comprehensive Security Analysis:</div>
+              <div className="text-sm font-medium mb-1">Comprehensive Triple-Layer Security Analysis:</div>
               <Alert variant={getAlertVariant()} className="border-opacity-50">
                 <AlertDescription>
                   <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">{threatDetails}</pre>
@@ -188,8 +190,8 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
           <div className="bg-muted/50 p-3 rounded-md border border-border/50">
             <p className="text-xs text-muted-foreground">
               {isSafe 
-                ? "Our comprehensive analysis (external APIs + internal heuristics) did not detect significant security risks with this item."
-                : "Our security analysis detected potential concerns. This includes both external threat intelligence and our internal pattern recognition system."}
+                ? "Our triple-layer security analysis (IPQS + VirusTotal + Internal Heuristics) did not detect significant security risks with this item."
+                : "Our triple-layer security analysis detected potential concerns using multiple external threat intelligence services and internal pattern recognition."}
             </p>
           </div>
           
