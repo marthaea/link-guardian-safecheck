@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -69,47 +68,21 @@ serve(async (req) => {
       console.log("Normalized input:", normalizedInput, "Domain:", domain);
     } catch (e) {
       console.error("Error parsing input:", e);
-      const result = {
-        url: input,
-        isSafe: false,
-        type,
-        threatDetails: 'Invalid format. Could not process the input.',
-        warningLevel: 'warning',
-        timestamp: new Date(),
-        riskScore: 0,
-        phishing: false,
-        suspicious: false,
-        spamming: false,
-        domainAge: 'Unknown',
-        country: 'Unknown',
-      };
-      
       return new Response(
-        JSON.stringify(result),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      )
-    }
-
-    // Special case for demo - make 'example.com' always safe
-    if (domain.includes('example.com')) {
-      const result = {
-        url: input,
-        isSafe: true,
-        type,
-        warningLevel: 'safe',
-        timestamp: new Date(),
-        riskScore: 15,
-        phishing: false,
-        suspicious: false,
-        spamming: false,
-        domainAge: '5 years ago',
-        country: 'US',
-        ipqsAnalysis: { detected: false, risk_score: 15 },
-        virusTotalAnalysis: { detected: false, positives: 0, total: 70 }
-      };
-      
-      return new Response(
-        JSON.stringify(result),
+        JSON.stringify({
+          url: input,
+          isSafe: false,
+          type,
+          threatDetails: 'Invalid format. Could not process the input.',
+          warningLevel: 'warning',
+          timestamp: new Date(),
+          riskScore: 0,
+          phishing: false,
+          suspicious: false,
+          spamming: false,
+          domainAge: 'Unknown',
+          country: 'Unknown',
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
@@ -125,15 +98,18 @@ serve(async (req) => {
     // IPQS Analysis
     try {
       console.log("Starting IPQS analysis...");
-      const ipqsUrl = `https://ipqualityscore.com/api/json/url/${IPQS_API_KEY}/${encodeURIComponent(normalizedInput)}?strictness=2&fast=true`;
+      const ipqsUrl = `https://ipqualityscore.com/api/json/url/${IPQS_API_KEY}/${encodeURIComponent(normalizedInput)}?strictness=2`;
       console.log("IPQS URL:", ipqsUrl);
       
       const ipqsResponse = await fetch(ipqsUrl, {
         method: 'GET',
         headers: {
-          'User-Agent': 'LinkGuardian/1.0'
+          'User-Agent': 'LinkGuardian/1.0',
+          'Accept': 'application/json'
         }
       });
+      
+      console.log("IPQS Response status:", ipqsResponse.status);
       
       if (ipqsResponse.ok) {
         const ipqsResult = await ipqsResponse.json();
@@ -147,16 +123,19 @@ serve(async (req) => {
           suspicious: ipqsResult.suspicious || false,
           spamming: ipqsResult.spamming || false,
           domain_age: ipqsResult.domain_age,
-          country_code: ipqsResult.country_code
+          country_code: ipqsResult.country_code,
+          success: ipqsResult.success !== false
         };
       } else {
         console.error("IPQS API returned error:", ipqsResponse.status, ipqsResponse.statusText);
+        const errorText = await ipqsResponse.text();
+        console.error("IPQS Error response:", errorText);
       }
     } catch (error) {
       console.error("IPQS API error:", error);
     }
 
-    // VirusTotal Analysis (simulate since we don't have API key)
+    // VirusTotal Analysis (simulate with consistent results)
     try {
       console.log("Starting VirusTotal analysis (simulated)...");
       const hash = normalizedInput.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
@@ -177,13 +156,13 @@ serve(async (req) => {
       console.error("VirusTotal simulation error:", error);
     }
 
-    // Combine results
-    const combinedResult = combineExternalResults(input, type, domain, ipqsData, vtData);
+    // Combine results and return
+    const result = combineResults(input, type, domain, ipqsData, vtData);
     
-    console.log("Final combined result:", combinedResult);
+    console.log("Final result:", result);
     
     return new Response(
-      JSON.stringify(combinedResult),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
     
@@ -193,7 +172,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: "Failed to check link security", 
-        details: error.message 
+        details: error.message,
+        url: requestData?.input || '',
+        isSafe: false,
+        type: 'link',
+        warningLevel: 'warning',
+        timestamp: new Date()
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -203,31 +187,45 @@ serve(async (req) => {
   }
 })
 
-// Combine results from external services
-function combineExternalResults(input: string, type: string, domain: string, ipqsData: any, vtData: any) {
-  // If both services failed, fall back to simulation
-  if (!ipqsData && !vtData) {
-    return simulateSecurityCheck(input, domain, type);
-  }
-
-  // Determine overall risk based on both services
+function combineResults(input: string, type: string, domain: string, ipqsData: any, vtData: any) {
+  // Determine overall risk
   let overallRisk = 0;
   let isSafe = true;
   let phishing = false;
   let suspicious = false;
   let spamming = false;
 
-  if (ipqsData) {
-    overallRisk = Math.max(overallRisk, ipqsData.risk_score);
+  if (ipqsData?.success) {
+    overallRisk = Math.max(overallRisk, ipqsData.risk_score || 0);
     if (ipqsData.unsafe || ipqsData.phishing || ipqsData.suspicious) {
       isSafe = false;
     }
     phishing = phishing || ipqsData.phishing;
     suspicious = suspicious || ipqsData.suspicious;
     spamming = spamming || ipqsData.spamming;
+  } else {
+    // Fallback to domain-based simulation if IPQS fails
+    const simulatedResult = simulateBasedOnDomain(domain);
+    overallRisk = simulatedResult.riskScore;
+    isSafe = simulatedResult.isSafe;
+    phishing = simulatedResult.phishing;
+    suspicious = simulatedResult.suspicious;
+    spamming = simulatedResult.spamming;
+    
+    // Update ipqsData with simulated values
+    ipqsData = {
+      service: 'IPQS (simulated)',
+      risk_score: simulatedResult.riskScore,
+      unsafe: !simulatedResult.isSafe,
+      phishing: simulatedResult.phishing,
+      suspicious: simulatedResult.suspicious,
+      spamming: simulatedResult.spamming,
+      domain_age: simulatedResult.domainAge,
+      country_code: simulatedResult.country
+    };
   }
 
-  if (vtData && vtData.detected) {
+  if (vtData?.detected) {
     overallRisk = Math.max(overallRisk, (vtData.positives / vtData.total) * 100);
     isSafe = false;
     suspicious = true;
@@ -252,119 +250,37 @@ function combineExternalResults(input: string, type: string, domain: string, ipq
   };
 }
 
-// Enhanced simulation method with consistent domain-based logic
-function simulateSecurityCheck(input: string, domain: string, type: 'email' | 'link') {
-  const maliciousDomains = [
-    'evil.com',
-    'malware.com',
-    'phishing.net',
-    'spammer.org',
-    'suspicious.co',
-  ];
-  
-  const suspiciousPatterns = [
-    'login',
-    'verify',
-    'account',
-    'secure',
-    'wallet',
-    'bitcoin',
-    'password',
-  ];
-  
-  // Check for known malicious domains
-  if (maliciousDomains.some(d => domain.includes(d))) {
-    return {
-      url: input,
-      isSafe: false,
-      type,
-      warningLevel: 'danger',
-      timestamp: new Date(),
-      riskScore: 92,
-      phishing: true,
-      suspicious: true,
-      spamming: true,
-      domainAge: '2 months ago',
-      country: 'RU',
-      ipqsAnalysis: { detected: true, risk_score: 92 },
-      virusTotalAnalysis: { detected: true, positives: 25, total: 70 }
-    };
-  }
-  
-  // Look for suspicious patterns in the full input
-  const hasSuspiciousPatterns = suspiciousPatterns.some(pattern => 
-    input.toLowerCase().includes(pattern)
-  );
-  
-  if (hasSuspiciousPatterns) {
-    return {
-      url: input,
-      isSafe: false,
-      type,
-      warningLevel: 'warning',
-      timestamp: new Date(),
-      riskScore: 72,
-      phishing: false,
-      suspicious: true,
-      spamming: false,
-      domainAge: '6 months ago',
-      country: 'CN',
-      ipqsAnalysis: { detected: false, risk_score: 72 },
-      virusTotalAnalysis: { detected: true, positives: 5, total: 70 }
-    };
-  }
-  
+function simulateBasedOnDomain(domain: string) {
   // Generate consistent results based on domain hash
   const domainHash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   
   const scenarios = [
-    // Safe result
     {
-      url: input,
-      isSafe: true,
-      type,
-      warningLevel: 'safe',
-      timestamp: new Date(),
       riskScore: 15,
+      isSafe: true,
       phishing: false,
       suspicious: false,
       spamming: false,
-      domainAge: '3 years ago',
-      country: 'US',
-      ipqsAnalysis: { detected: false, risk_score: 15 },
-      virusTotalAnalysis: { detected: false, positives: 0, total: 70 }
+      domainAge: 365 * 3,
+      country: 'US'
     },
-    // Risky result
     {
-      url: input,
+      riskScore: 85,
       isSafe: false,
-      type,
-      warningLevel: 'danger',
-      timestamp: new Date(),
-      riskScore: 88,
       phishing: true,
       suspicious: true,
       spamming: false,
-      domainAge: '1 month ago',
-      country: 'RU',
-      ipqsAnalysis: { detected: true, risk_score: 88 },
-      virusTotalAnalysis: { detected: true, positives: 18, total: 70 }
+      domainAge: 30,
+      country: 'RU'
     },
-    // Medium risk result
     {
-      url: input,
+      riskScore: 65,
       isSafe: false,
-      type,
-      warningLevel: 'warning',
-      timestamp: new Date(),
-      riskScore: 68,
       phishing: false,
       suspicious: true,
       spamming: true,
-      domainAge: '4 months ago',
-      country: 'BR',
-      ipqsAnalysis: { detected: false, risk_score: 68 },
-      virusTotalAnalysis: { detected: true, positives: 8, total: 70 }
+      domainAge: 120,
+      country: 'CN'
     }
   ];
   

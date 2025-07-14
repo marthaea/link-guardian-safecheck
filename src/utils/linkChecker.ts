@@ -22,41 +22,55 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const userId = user?.id;
     
     console.log("Calling Supabase Edge Function to check link:", input);
+    console.log("Supabase URL:", supabase.supabaseUrl);
     
     // Perform heuristic analysis first
     const heuristicAnalysis = getSuspicionScore(input);
     console.log("Heuristic analysis result:", heuristicAnalysis);
     
-    // Check if user is offline
-    const isOffline = !navigator.onLine;
-    
     let apiData = null;
-    let offlineMode = false;
+    let functionError = null;
     
-    if (!isOffline) {
-      try {
-        // Call the Supabase Edge Function
-        const { data, error } = await supabase.functions.invoke('check-link', {
-          body: { 
-            input: input,
-            userId: userId 
-          }
-        });
-        
-        if (error) {
-          console.error("Supabase function error:", error);
-          throw error;
+    try {
+      console.log("Attempting to call check-link function...");
+      
+      // Call the Supabase Edge Function with timeout
+      const functionCall = supabase.functions.invoke('check-link', {
+        body: { 
+          input: input,
+          userId: userId 
         }
-        
-        console.log("Supabase function result:", data);
-        apiData = data;
-      } catch (error) {
-        console.error("API call failed, falling back to heuristic only:", error);
-        offlineMode = true;
+      });
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Function call timeout')), 15000)
+      );
+      
+      const { data, error } = await Promise.race([functionCall, timeoutPromise]) as any;
+      
+      if (error) {
+        console.error("Supabase function error:", error);
+        functionError = error;
+        throw error;
       }
-    } else {
-      console.log("User is offline, using heuristic analysis only");
-      offlineMode = true;
+      
+      console.log("Supabase function result:", data);
+      apiData = data;
+      
+      // Validate the response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response from function');
+      }
+      
+    } catch (error) {
+      console.error("API call failed:", error);
+      functionError = error;
+      
+      // Check if it's a network/deployment issue
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('timeout')) {
+        console.log("Edge function appears to be unavailable, using heuristic analysis only");
+      }
     }
     
     let scanResult: ScanResult;
@@ -64,13 +78,21 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     // Determine the type properly
     const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
     
-    if (offlineMode || !apiData) {
+    if (!apiData || functionError) {
       // Fall back to heuristic analysis only
+      const isNetworkIssue = functionError?.message?.includes('Failed to fetch') || 
+                            functionError?.message?.includes('timeout') ||
+                            functionError?.name === 'FunctionsFetchError';
+      
+      const offlineMessage = isNetworkIssue 
+        ? '🔌 External verification services are currently unavailable. ' 
+        : '⚠️ External verification temporarily unavailable. ';
+      
       scanResult = {
         url: input,
         isSafe: heuristicAnalysis.riskLevel === 'low',
         type: inputType,
-        threatDetails: `${isOffline ? '🔌 You are currently offline. ' : '⚠️ External verification temporarily unavailable. '}Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
+        threatDetails: `${offlineMessage}Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
         warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
         timestamp: new Date(),
         riskScore: heuristicAnalysis.score,
@@ -110,7 +132,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
   } catch (error) {
     console.error("Link checker error:", error);
     
-    // Fall back to heuristic analysis only when API fails
+    // Fall back to heuristic analysis only when everything fails
     const heuristicAnalysis = getSuspicionScore(input);
     const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
     
@@ -118,7 +140,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       url: input,
       isSafe: heuristicAnalysis.riskLevel === 'low',
       type: inputType,
-      threatDetails: `⚠️ External verification temporarily unavailable. Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
+      threatDetails: `⚠️ All external verification services are currently unavailable. Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
       warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
       timestamp: new Date(),
       riskScore: heuristicAnalysis.score,
