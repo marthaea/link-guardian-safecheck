@@ -1,3 +1,4 @@
+
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 import { getSuspicionScore, combineAnalysis } from "./suspiciousUrlScorer";
@@ -22,7 +23,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     console.log("Calling Supabase Edge Function to check link:", input);
     
-    // Perform heuristic analysis first
+    // Perform heuristic analysis first as backup
     const heuristicAnalysis = getSuspicionScore(input);
     console.log("Heuristic analysis result:", heuristicAnalysis);
     
@@ -42,7 +43,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
       
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Function call timeout')), 15000)
+        setTimeout(() => reject(new Error('Function call timeout')), 20000)
       );
       
       const { data, error } = await Promise.race([functionCall, timeoutPromise]) as any;
@@ -53,7 +54,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
         throw error;
       }
       
-      console.log("Supabase function result:", data);
+      console.log("Supabase function SUCCESS! Result:", data);
       apiData = data;
       
       // Validate the response structure
@@ -64,11 +65,6 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     } catch (error) {
       console.error("API call failed:", error);
       functionError = error;
-      
-      // Check if it's a network/deployment issue
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('timeout')) {
-        console.log("Edge function appears to be unavailable, using heuristic analysis only");
-      }
     }
     
     let scanResult: ScanResult;
@@ -78,19 +74,13 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     if (!apiData || functionError) {
       // Fall back to heuristic analysis only
-      const isNetworkIssue = functionError?.message?.includes('Failed to fetch') || 
-                            functionError?.message?.includes('timeout') ||
-                            functionError?.name === 'FunctionsFetchError';
-      
-      const offlineMessage = isNetworkIssue 
-        ? '🔌 External verification services are currently unavailable. ' 
-        : '⚠️ External verification temporarily unavailable. ';
+      console.log("Using fallback heuristic-only analysis");
       
       scanResult = {
         url: input,
         isSafe: heuristicAnalysis.riskLevel === 'low',
         type: inputType,
-        threatDetails: `${offlineMessage}Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
+        threatDetails: `⚠️ External verification services are currently unavailable. Analysis based on internal heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
         warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
         timestamp: new Date(),
         riskScore: heuristicAnalysis.score,
@@ -98,25 +88,24 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
         heuristicRiskLevel: heuristicAnalysis.riskLevel,
       };
     } else {
-      // Combine API results with heuristic analysis
-      const combinedResults = combineAnalysis(apiData, heuristicAnalysis);
+      // SUCCESS! We have triple analysis results
+      console.log("Processing triple analysis results");
       
-      // Transform the response to our ScanResult format with detailed information
       scanResult = {
         url: input,
-        isSafe: combinedResults.isSafe,
+        isSafe: apiData.isSafe,
         type: inputType,
-        threatDetails: combinedResults.combinedThreatDetails,
-        warningLevel: combinedResults.warningLevel,
+        threatDetails: formatTripleAnalysisDetails(apiData),
+        warningLevel: apiData.warningLevel,
         timestamp: new Date(),
-        riskScore: combinedResults.riskScore,
+        riskScore: apiData.riskScore,
         phishing: apiData.phishing,
         suspicious: apiData.suspicious,
         spamming: apiData.spamming,
         domainAge: apiData.domainAge,
         country: apiData.country,
-        heuristicScore: heuristicAnalysis.score,
-        heuristicRiskLevel: heuristicAnalysis.riskLevel,
+        heuristicScore: apiData.heuristicAnalysis?.score || heuristicAnalysis.score,
+        heuristicRiskLevel: apiData.heuristicAnalysis?.riskLevel || heuristicAnalysis.riskLevel,
       };
     }
     
@@ -152,6 +141,81 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     return fallbackResult;
   }
 };
+
+// Format triple analysis results when API succeeds
+function formatTripleAnalysisDetails(apiData: any): string {
+  let details = [];
+  
+  details.push('🛡️ TRIPLE-LAYER SECURITY ANALYSIS COMPLETE');
+  details.push('');
+  
+  // IPQS Analysis
+  if (apiData.ipqsAnalysis) {
+    details.push('🔍 IPQS Security Analysis:');
+    if (apiData.ipqsAnalysis.risk_score > 70) {
+      details.push('   ⚠️ HIGH RISK: Significant security concerns detected');
+    } else if (apiData.ipqsAnalysis.risk_score > 30) {
+      details.push('   ⚠️ MODERATE RISK: Some security concerns detected');
+    } else {
+      details.push('   ✅ LOW RISK: Minimal security concerns');
+    }
+    details.push(`   • Risk Score: ${apiData.ipqsAnalysis.risk_score}/100`);
+    if (apiData.phishing) details.push('   • ⚠️ Phishing activity detected');
+    if (apiData.suspicious) details.push('   • ⚠️ Suspicious behavior patterns');
+    if (apiData.spamming) details.push('   • ⚠️ Spam activity detected');
+  }
+  
+  details.push('');
+  
+  // VirusTotal Analysis
+  if (apiData.virusTotalAnalysis) {
+    details.push('🦠 VirusTotal Security Analysis:');
+    if (apiData.virusTotalAnalysis.detected) {
+      details.push(`   ⚠️ THREATS DETECTED: ${apiData.virusTotalAnalysis.positives}/${apiData.virusTotalAnalysis.total} security engines flagged this URL`);
+    } else {
+      details.push(`   ✅ CLEAN: 0/${apiData.virusTotalAnalysis.total} security engines detected threats`);
+    }
+  }
+  
+  details.push('');
+  
+  // Heuristic Analysis
+  if (apiData.heuristicAnalysis) {
+    details.push('🧠 Internal Heuristic Analysis:');
+    details.push(`   • Suspicion Score: ${apiData.heuristicAnalysis.score}/100`);
+    details.push(`   • Risk Assessment: ${apiData.heuristicAnalysis.riskLevel.toUpperCase()}`);
+    
+    if (apiData.heuristicAnalysis.factors && apiData.heuristicAnalysis.factors.length > 0) {
+      details.push('   • Suspicious Patterns:');
+      apiData.heuristicAnalysis.factors.forEach((factor: string) => {
+        details.push(`     - ${factor}`);
+      });
+    } else {
+      details.push('   • No suspicious patterns detected');
+    }
+  }
+  
+  details.push('');
+  
+  // Domain Information
+  details.push('🌍 Domain Information:');
+  if (apiData.domainAge) {
+    details.push(`   📅 Domain Age: ${apiData.domainAge}`);
+  }
+  if (apiData.country) {
+    details.push(`   🌍 Country: ${apiData.country}`);
+  }
+  
+  details.push('');
+  
+  // Combined Assessment
+  details.push('📊 Combined Security Assessment:');
+  details.push(`   • Overall Risk Score: ${apiData.riskScore}/100`);
+  details.push(`   • Security Status: ${apiData.isSafe ? 'SAFE' : 'POTENTIALLY UNSAFE'}`);
+  details.push('   • Analysis Sources: IPQS + VirusTotal + Internal Heuristics');
+  
+  return details.join('\n');
+}
 
 // Format heuristic-only analysis for display when API fails
 function formatHeuristicOnlyDetails(heuristicAnalysis: any): string {
