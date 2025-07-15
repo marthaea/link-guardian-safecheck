@@ -1,4 +1,3 @@
-
 import { ScanResult } from "../components/ScanResults";
 import { supabase } from "@/integrations/supabase/client";
 import { getSuspicionScore, combineAnalysis } from "./suspiciousUrlScorer";
@@ -22,7 +21,6 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     const userId = user?.id;
     
     console.log("Calling Supabase Edge Function to check link:", input);
-    console.log("Supabase URL:", supabase.supabaseUrl);
     
     // Perform heuristic analysis first
     const heuristicAnalysis = getSuspicionScore(input);
