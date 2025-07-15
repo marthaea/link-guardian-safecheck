@@ -49,7 +49,7 @@ const Header = () => {
           <header className={`transition-all duration-500 ease-out rounded-2xl ${
             isScrolled 
               ? 'py-3 px-8 bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-gray-700/50' 
-              : 'py-5 px-10 bg-gray-900/30 backdrop-blur-md shadow-xl border border-gray-700/30'
+              : 'py-5 px-10 bg-transparent'
           }`}>
             <div className="flex justify-between items-center">
               {/* Logo */}
@@ -158,8 +158,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Spacer to prevent content overlap */}
-      <div className={`transition-all duration-300 ${isScrolled ? 'h-20' : 'h-28'}`}></div>
 
       {/* Bulk Check Modal/Overlay */}
       {showBulkCheck && (
