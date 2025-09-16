@@ -6,19 +6,36 @@ import Footer from "@/components/Footer";
 
 const CyberSecurityAwareness = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-cyan-900">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-gray-900 text-cyan-100 relative">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: 'url(/lovable-uploads/64cd60c1-72f0-40f4-8152-3d3d3edab305.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(8px) brightness(0.3)',
+        }}
+      />
       
-      <div className="container mx-auto px-4 py-24">
-        <div className="max-w-4xl mx-auto">
-          <Link to="/">
-            <Button variant="ghost" className="mb-8 text-cyan-100 hover:text-cyan-400">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
+      {/* Dark overlay */}
+      <div className="fixed inset-0 z-1 bg-gray-900/80" />
+      
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        <Header />
+        
+        <div className="container mx-auto px-4 py-24">
+          <div className="max-w-4xl mx-auto">
+            <Link to="/">
+              <Button variant="ghost" className="mb-8 text-cyan-100 hover:text-cyan-400">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+            </Link>
 
-          <div className="bg-gray-900/80 backdrop-blur-md border border-cyan-800/30 rounded-2xl p-8 space-y-8">
+            <div className="bg-gray-800/80 backdrop-blur-md border border-cyan-800/30 rounded-2xl p-8 space-y-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold text-cyan-100 mb-4">
                 Stay Safe Online: Your Complete Guide to Link Security
@@ -292,6 +309,7 @@ const CyberSecurityAwareness = () => {
       </div>
       
       <Footer />
+      </div>
     </div>
   );
 };

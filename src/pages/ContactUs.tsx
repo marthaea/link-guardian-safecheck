@@ -100,12 +100,38 @@ const ContactUs = () => {
               </div>
               
               <div className="grid md:grid-cols-2 gap-8">
-                {/* Team Member 1 */}
+                {/* Team Member 1 - Noel */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
                   <Avatar className="h-16 w-16">
-                    <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
-                      M
+                    <AvatarImage src="/team/noel.jpg" alt="Katawera Noel Ephraim" />
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
+                      K
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Katawera Noel Ephraim</h3>
+                    <p className="text-cyan-300 text-sm mb-2">UI/UX Designer</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.open('https://github.com/arcanewildcrd', '_blank')}
+                      >
+                        <Github className="h-3 w-3 mr-1" />
+                        GitHub
+                      </Button>
                     </div>
+                  </div>
+                </div>
+
+                {/* Team Member 2 - Chantal */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src="/team/chantal.jpg" alt="Mugenyi Olga Chantal" />
+                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
+                      M
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-cyan-100">Mugenyi Olga Chantal</h3>
@@ -124,45 +150,13 @@ const ContactUs = () => {
                   </div>
                 </div>
 
-                {/* Team Member 2 */}
+                {/* Team Member 3 - Martha */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
                   <Avatar className="h-16 w-16">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
-                      N
-                    </div>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-cyan-100">Nabuuma Andrea Heartily</h3>
-                    <p className="text-cyan-300 text-sm mb-2">Cybersecurity Threat Intelligence Analyst</p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
-                        onClick={() => window.open('https://github.com/andreaheartily', '_blank')}
-                      >
-                        <Github className="h-3 w-3 mr-1" />
-                        GitHub
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
-                        onClick={() => window.location.href = 'tel:+256703010612'}
-                      >
-                        <Phone className="h-3 w-3 mr-1" />
-                        Call
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Team Member 3 */}
-                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
-                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                    <AvatarImage src="/team/martha.jpg" alt="Martha Praise Katusiime" />
+                    <AvatarFallback className="bg-gradient-to-br from-green-400 to-blue-500 text-white font-bold text-xl">
                       M
-                    </div>
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-cyan-100">Martha Praise Katusiime</h3>
@@ -190,12 +184,13 @@ const ContactUs = () => {
                   </div>
                 </div>
 
-                {/* Team Member 4 */}
+                {/* Team Member 4 - Richard */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
                   <Avatar className="h-16 w-16">
-                    <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xl">
+                    <AvatarImage src="/team/richard.jpg" alt="Magezi Richard Elijah" />
+                    <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white font-bold text-xl">
                       M
-                    </div>
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-cyan-100">Magezi Richard Elijah</h3>
@@ -215,6 +210,39 @@ const ContactUs = () => {
                         variant="outline"
                         className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
                         onClick={() => window.location.href = 'tel:+256740014177'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Member 5 - Andrea */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white font-bold text-xl">
+                      N
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Nabuuma Andrea Heartily</h3>
+                    <p className="text-cyan-300 text-sm mb-2">Cybersecurity Threat Intelligence Analyst</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.open('https://github.com/andreaheartily', '_blank')}
+                      >
+                        <Github className="h-3 w-3 mr-1" />
+                        GitHub
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256703010612'}
                       >
                         <Phone className="h-3 w-3 mr-1" />
                         Call
