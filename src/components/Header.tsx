@@ -82,6 +82,13 @@ const Header = () => {
                     <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></div>
                   </button>
                   <Link 
+                    to="/awareness"
+                    className="text-gray-200 hover:text-cyan-400 transition-all duration-300 font-medium text-sm tracking-wider uppercase relative group"
+                  >
+                    Awareness
+                    <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-cyan-400 transition-all duration-300 group-hover:w-full"></div>
+                  </Link>
+                  <Link 
                     to="/heuristics"
                     className="text-gray-200 hover:text-cyan-400 transition-all duration-300 font-medium text-sm tracking-wider uppercase relative group"
                   >
@@ -133,6 +140,13 @@ const Header = () => {
                   >
                     Common Threats
                   </button>
+                  <Link 
+                    to="/awareness"
+                    className="text-left text-gray-200 hover:text-cyan-400 transition-colors py-2 font-medium text-sm tracking-wider uppercase"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Awareness
+                  </Link>
                   <Link 
                     to="/heuristics"
                     className="text-left text-gray-200 hover:text-cyan-400 transition-colors py-2 font-medium text-sm tracking-wider uppercase"

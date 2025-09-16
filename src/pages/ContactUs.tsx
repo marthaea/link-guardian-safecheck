@@ -32,159 +32,196 @@ const ContactUs = () => {
             <div className="mb-8 text-center">
               <Mail className="h-12 w-12 text-cyan-400 mx-auto mb-4" />
               <h1 className="text-3xl md:text-4xl font-bold text-cyan-300 mb-4">Contact Us</h1>
-              <p className="text-cyan-100/80">Get in touch with the Nexus team</p>
+              <p className="text-cyan-100/80">Get in touch with our team</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
               {/* Company Info */}
-              <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30">
+              <div className="bg-gray-800/80 backdrop-blur-md border border-cyan-800/30 rounded-2xl p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <Building2 className="h-8 w-8 text-cyan-400" />
-                  <h2 
-                    className="text-2xl font-semibold text-cyan-300 hover:text-cyan-200 cursor-pointer transition-colors"
-                    onClick={() => window.open('https://nexushavenn.netlify.app', '_blank')}
-                  >
-                    Nexus
-                  </h2>
+                  <Building2 className="h-6 w-6 text-cyan-400" />
+                  <h2 className="text-2xl font-bold text-cyan-100">Company Information</h2>
                 </div>
-                
-                <p className="text-cyan-100/90 mb-6">
-                  We're dedicated to making the internet a safer place through innovative security solutions. 
-                  LinkGuardian is our contribution to protecting users from online threats.
-                </p>
-                
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-cyan-100/80">
-                    <Mail className="h-5 w-5 text-cyan-400" />
-                    <span>Contact us through our co-founders on GitHub</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-cyan-100/80">
+                  <div className="flex items-center gap-3">
                     <Phone className="h-5 w-5 text-cyan-400" />
-                    <span>Call us directly</span>
+                    <div>
+                      <p className="text-cyan-100">Primary: +256 788 607 860</p>
+                      <p className="text-cyan-100">Secondary: +256 703 010 612</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-5 w-5 text-cyan-400" />
+                    <p className="text-cyan-100">contact@linkguardian.com</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-cyan-400" />
+                    <p className="text-cyan-100">Enterprise Security Solutions Team</p>
                   </div>
                 </div>
               </div>
 
-              {/* Phone Numbers */}
-              <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30">
+              {/* Quick Contact */}
+              <div className="bg-gray-800/80 backdrop-blur-md border border-cyan-800/30 rounded-2xl p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <Phone className="h-8 w-8 text-cyan-400" />
-                  <h2 className="text-2xl font-semibold text-cyan-300">Phone Numbers</h2>
+                  <Mail className="h-6 w-6 text-cyan-400" />
+                  <h2 className="text-2xl font-bold text-cyan-100">Quick Contact</h2>
                 </div>
-                
                 <div className="space-y-4">
-                  <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <a 
-                      href="tel:+256740014177" 
-                      className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
+                  <p className="text-cyan-100/80">
+                    Need immediate assistance with link verification or have questions about our security tools?
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium"
+                      onClick={() => window.location.href = 'mailto:contact@linkguardian.com'}
                     >
-                      <Phone className="h-4 w-4" />
-                      +256 740 014 177
-                    </a>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                    <a 
-                      href="tel:+256705713086" 
-                      className="text-cyan-100 hover:text-cyan-300 transition-colors flex items-center gap-2"
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Email
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white"
+                      onClick={() => window.location.href = 'tel:+256788607860'}
                     >
-                      <Phone className="h-4 w-4" />
-                      +256 705 713 086
-                    </a>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call Now
+                    </Button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Co-founders */}
-            <div className="mt-8 bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30">
-              <div className="flex items-center gap-3 mb-6">
-                <Users className="h-8 w-8 text-cyan-400" />
-                <h2 className="text-2xl font-semibold text-cyan-300">Co-founders</h2>
+            {/* Our Team Section */}
+            <div className="bg-gray-800/80 backdrop-blur-md border border-cyan-800/30 rounded-2xl p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <Users className="h-6 w-6 text-cyan-400" />
+                <h2 className="text-2xl font-bold text-cyan-100">Meet Our Team</h2>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src="/lovable-uploads/f5e0feaf-69f3-42a0-91b2-45ed6c8e5367.png" alt="Martha" />
-                      <AvatarFallback className="bg-cyan-600 text-white">M</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold text-cyan-200">Martha</h3>
-                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Team Member 1 */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <div className="w-full h-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                      M
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Mugenyi Olga Chantal</h3>
+                    <p className="text-cyan-300 text-sm mb-2">Head of the Legal Team</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256788607860'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
                     </div>
                   </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                    onClick={() => window.open('https://github.com/marthaea', '_blank')}
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    @marthaea
-                  </Button>
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-gray-900/60 rounded-lg border border-cyan-800/20">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src="/lovable-uploads/8916d1cd-66ef-4752-86ae-f52586f0214f.png" alt="Jonathan" />
-                      <AvatarFallback className="bg-cyan-600 text-white">J</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold text-cyan-200">Jonathan</h3>
-                      <p className="text-cyan-100/70 text-sm">Co-founder</p>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                    onClick={() => window.open('https://github.com/jonathansaint', '_blank')}
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    @jonathansaint
-                  </Button>
-                </div>
-              </div>
-            </div>
 
-            {/* Additional Info */}
-            <div className="mt-8 bg-gray-800/70 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-cyan-800/30 text-center">
-              <h3 className="text-xl font-semibold text-cyan-300 mb-4">Have Questions or Feedback?</h3>
-              <p className="text-cyan-100/90 mb-6">
-                We'd love to hear from you! Whether you have questions about LinkGuardian, 
-                want to report a bug, or have suggestions for improvements, feel free to reach out to us.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                  onClick={() => window.open('tel:+256740014177')}
-                >
-                  <Phone className="mr-2 h-5 w-5" />
-                  Call Us
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                  onClick={() => window.open('https://github.com/marthaea', '_blank')}
-                >
-                  <Github className="mr-2 h-5 w-5" />
-                  Contact Martha
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-cyan-600 text-cyan-100 bg-gray-800/60 hover:bg-cyan-600/20 hover:text-cyan-300"
-                  onClick={() => window.open('https://github.com/jonathansaint', '_blank')}
-                >
-                  <Github className="mr-2 h-5 w-5" />
-                  Contact Jonathan
-                </Button>
+                {/* Team Member 2 */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
+                      N
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Nabuuma Andrea Heartily</h3>
+                    <p className="text-cyan-300 text-sm mb-2">Cybersecurity Threat Intelligence Analyst</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.open('https://github.com/andreaheartily', '_blank')}
+                      >
+                        <Github className="h-3 w-3 mr-1" />
+                        GitHub
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256703010612'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Member 3 */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                      M
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Martha Praise Katusiime</h3>
+                    <p className="text-cyan-300 text-sm mb-2">Full-Stack Developer</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.open('https://github.com/marthaea/', '_blank')}
+                      >
+                        <Github className="h-3 w-3 mr-1" />
+                        GitHub
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256740014177'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Member 4 */}
+                <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
+                  <Avatar className="h-16 w-16">
+                    <div className="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xl">
+                      M
+                    </div>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-cyan-100">Magezi Richard Elijah</h3>
+                    <p className="text-cyan-300 text-sm mb-2">Product Marketing Manager & Full-Stack Developer</p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.open('https://github.com/Plastimytes', '_blank')}
+                      >
+                        <Github className="h-3 w-3 mr-1" />
+                        GitHub
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256740014177'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

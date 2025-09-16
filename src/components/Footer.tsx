@@ -20,7 +20,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-6 text-center text-xs text-cyan-100/60">
-          &copy; {new Date().getFullYear()} LinkGuardian by Nexus. All rights reserved. 
+          &copy; {new Date().getFullYear()} LinkGuardian by wonderful people. All rights reserved. 
           <div className="mt-1">For educational purposes only. Do not rely solely on this tool for security decisions.</div>
         </div>
       </div>
