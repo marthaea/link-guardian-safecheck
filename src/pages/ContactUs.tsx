@@ -102,7 +102,7 @@ const ContactUs = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Team Member 1 - Noel */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-20 w-20">
                     <AvatarImage src="/team/noel.jpg" alt="Katawera Noel Ephraim" />
                     <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
                       K
@@ -127,7 +127,7 @@ const ContactUs = () => {
 
                 {/* Team Member 2 - Chantal */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-20 w-20">
                     <AvatarImage src="/team/chantal.jpg" alt="Mugenyi Olga Chantal" />
                     <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
                       M
@@ -152,7 +152,7 @@ const ContactUs = () => {
 
                 {/* Team Member 3 - Martha */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-20 w-20">
                     <AvatarImage src="/team/martha.jpg" alt="Martha Praise Katusiime" />
                     <AvatarFallback className="bg-gradient-to-br from-green-400 to-blue-500 text-white font-bold text-xl">
                       M
@@ -186,7 +186,7 @@ const ContactUs = () => {
 
                 {/* Team Member 4 - Richard */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-20 w-20">
                     <AvatarImage src="/team/richard.jpg" alt="Magezi Richard Elijah" />
                     <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white font-bold text-xl">
                       M
@@ -220,7 +220,8 @@ const ContactUs = () => {
 
                 {/* Team Member 5 - Andrea */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src="/team/andrea.jpg" alt="Nabuuma Andrea Heartily" />
                     <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white font-bold text-xl">
                       N
                     </AvatarFallback>

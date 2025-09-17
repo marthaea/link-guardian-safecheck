@@ -35,6 +35,24 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
 
   const { url, isSafe, type, threatDetails, warningLevel = isSafe ? 'safe' : 'danger' } = result;
 
+  const calculateCombinedScore = () => {
+    let totalScore = 0;
+    let scoreCount = 0;
+    
+    if (result.riskScore !== undefined) {
+      totalScore += result.riskScore;
+      scoreCount++;
+    }
+    if (result.heuristicScore !== undefined) {
+      totalScore += result.heuristicScore;
+      scoreCount++;
+    }
+    
+    return scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
+  };
+
+  const combinedScore = calculateCombinedScore();
+  
   const getStatusContent = () => {
     const analysisCount = [
       result.riskScore !== undefined ? 'External API 1' : null,
@@ -187,7 +205,17 @@ const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => {
             </div>
           )}
 
-          <div className="bg-muted/50 p-3 rounded-md border border-border/50">
+          <div className="bg-muted/50 p-4 rounded-md border border-border/50 space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium">Combined Security Score</div>
+              <div className={cn("text-lg font-bold px-3 py-1 rounded-full", 
+                combinedScore <= 30 ? "text-[hsl(var(--safe))] bg-[hsl(var(--safe))]/20" :
+                combinedScore <= 70 ? "text-[hsl(var(--warning))] bg-[hsl(var(--warning))]/20" :
+                "text-[hsl(var(--danger))] bg-[hsl(var(--danger))]/20"
+              )}>
+                {combinedScore}/100
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground">
               {isSafe 
                 ? "Our triple-layer security analysis (IPQS + VirusTotal + Internal Heuristics) did not detect significant security risks with this item."

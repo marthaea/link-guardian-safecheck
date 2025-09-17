@@ -34,6 +34,12 @@ const Header = () => {
   };
 
   const scrollToSection = (sectionId: string) => {
+    // If not on homepage, navigate to homepage first then scroll
+    if (window.location.pathname !== '/') {
+      window.location.href = `/#${sectionId}`;
+      return;
+    }
+    
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
