@@ -1,6 +1,6 @@
 
-const CACHE_NAME = 'link-guardian-v3';
-const STATIC_CACHE_NAME = 'link-guardian-static-v3';
+const CACHE_NAME = 'link-guardian-v8';
+const STATIC_CACHE_NAME = 'link-guardian-static-v8';
 
 // Resources to cache immediately
 const STATIC_RESOURCES = [

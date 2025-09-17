@@ -14,42 +14,42 @@ interface Review {
 const reviews: Review[] = [
   {
     id: 1,
-    name: "Sarah Chen",
+    name: "Nakato Grace",
     rating: 5,
     comment: "Link Guardian has saved me from several phishing attempts. The heuristic analysis is incredibly accurate!",
     date: "2024-06-15"
   },
   {
     id: 2,
-    name: "Michael Rodriguez",
+    name: "Okello Samuel",
     rating: 5,
     comment: "As a security professional, I'm impressed by the comprehensive threat detection. Great tool!",
     date: "2024-06-12"
   },
   {
     id: 3,
-    name: "Emily Johnson",
+    name: "Namukasa Rebecca",
     rating: 4,
     comment: "Easy to use and very reliable. The bulk check feature is particularly useful for my work.",
     date: "2024-06-10"
   },
   {
     id: 4,
-    name: "David Kim",
+    name: "Wamala Daniel",
     rating: 5,
     comment: "The PWA works perfectly offline. Love the detailed analysis reports!",
     date: "2024-06-08"
   },
   {
     id: 5,
-    name: "Lisa Thompson",
+    name: "Namatovu Peace",
     rating: 5,
     comment: "Finally, a link checker that actually works! The real-time scanning is fantastic.",
     date: "2024-06-05"
   },
   {
     id: 6,
-    name: "Alex Park",
+    name: "Kigozi Moses",
     rating: 4,
     comment: "Comprehensive security analysis with clear explanations. Highly recommended!",
     date: "2024-06-03"
@@ -117,42 +117,92 @@ const ReviewsSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {reviews.map((review, index) => (
             <div
               key={review.id}
               ref={(el) => (reviewRefs.current[index] = el)}
               data-index={index}
-              className={`transform transition-all duration-700 ease-out ${
+              className={`review-card transform transition-all duration-700 ease-out ${
                 visibleReviews.includes(index)
                   ? 'translate-y-0 opacity-100'
                   : 'translate-y-8 opacity-0'
               }`}
               style={{
-                transitionDelay: `${index * 150}ms`
+                transitionDelay: `${index * 150}ms`,
+                overflow: 'visible',
+                width: '280px',
+                height: '320px',
+                margin: '0 auto'
               }}
             >
-              <Card className="bg-gray-800 border-gray-700 hover:border-cyan-400 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-400/20 animate-fade-in">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-cyan-400 rounded-full flex items-center justify-center">
-                        <User size={20} className="text-gray-900" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-white">{review.name}</h4>
-                        <p className="text-sm text-gray-400">{review.date}</p>
+              <div className="review-content w-full h-full relative hover:rotate-y-180" style={{
+                transformStyle: 'preserve-3d',
+                transition: 'transform 300ms',
+                boxShadow: '0px 0px 15px 3px rgba(6, 182, 212, 0.3)',
+                borderRadius: '8px'
+              }}>
+                {/* Front of card */}
+                <div className="review-front absolute w-full h-full rounded-lg overflow-hidden" style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                  background: 'linear-gradient(135deg, hsl(210 40% 8%) 0%, hsl(222 47% 11%) 100%)'
+                }}>
+                  <div className="front-content absolute w-full h-full p-4 flex flex-col justify-between text-white">
+                    <div className="badge bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm w-fit">
+                      <div className="flex space-x-1">
+                        {renderStars(review.rating)}
                       </div>
                     </div>
-                    <div className="flex space-x-1">
-                      {renderStars(review.rating)}
+                    <div className="description bg-black/60 p-4 rounded-lg backdrop-blur-md shadow-lg">
+                      <div className="title text-sm flex justify-between items-start mb-2">
+                        <p className="font-semibold text-cyan-100">{review.name}</p>
+                        <p className="text-xs text-cyan-300">{review.date}</p>
+                      </div>
+                      <p className="text-sm text-gray-200 leading-relaxed">"{review.comment}"</p>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    "{review.comment}"
-                  </p>
-                </CardContent>
-              </Card>
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-blue-900/20"></div>
+                </div>
+
+                {/* Back of card */}
+                <div className="review-back absolute w-full h-full rounded-lg flex justify-center items-center overflow-hidden" style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  background: 'hsl(210 40% 8%)'
+                }}>
+                  <div className="absolute w-40 h-40 rounded-full animate-spin" style={{
+                    background: 'linear-gradient(90deg, transparent, hsl(178 95% 45%), hsl(178 95% 45%), hsl(178 95% 45%), hsl(178 95% 45%), transparent)',
+                    animationDuration: '5s'
+                  }}></div>
+                  <div className="back-content absolute w-[98%] h-[98%] rounded-lg flex flex-col justify-center items-center gap-6 text-white" style={{
+                    background: 'hsl(210 40% 8%)'
+                  }}>
+                    <div className="w-16 h-16 bg-cyan-400 rounded-full flex items-center justify-center">
+                      <User size={28} className="text-gray-900" />
+                    </div>
+                    <div className="text-center">
+                      <h4 className="text-lg font-bold text-cyan-100 mb-1">{review.name}</h4>
+                      <p className="text-sm text-cyan-300">Verified User</p>
+                    </div>
+                    <div className="floating-elements relative">
+                      <div className="absolute w-20 h-20 rounded-full bg-cyan-400/30 blur-md animate-bounce" style={{
+                        left: '-40px',
+                        top: '-20px',
+                        animationDelay: '0ms',
+                        animationDuration: '2600ms'
+                      }}></div>
+                      <div className="absolute w-8 h-8 rounded-full bg-cyan-500/40 blur-sm animate-bounce" style={{
+                        right: '-30px',
+                        top: '10px',
+                        animationDelay: '-800ms',
+                        animationDuration: '2600ms'
+                      }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>

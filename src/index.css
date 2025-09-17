@@ -3,6 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .review-card:hover .review-content {
+    transform: rotateY(180deg);
+  }
+  
+  .hover-rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
 @layer base {
   :root {
     --background: 222.2 84% 4.9%;
@@ -73,9 +83,7 @@
     --warning: 36 100% 45%;
     --danger: 354 70% 50%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }

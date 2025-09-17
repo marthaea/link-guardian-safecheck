@@ -102,8 +102,8 @@ const ContactUs = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Team Member 1 - Noel */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/team/noel.jpg" alt="Katawera Noel Ephraim" />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/team/noel.jpg" alt="Katawera Noel Ephraim" className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
                       K
                     </AvatarFallback>
@@ -121,14 +121,23 @@ const ContactUs = () => {
                         <Github className="h-3 w-3 mr-1" />
                         GitHub
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-600 text-cyan-400 hover:bg-cyan-600 hover:text-white px-3 py-1"
+                        onClick={() => window.location.href = 'tel:+256781782071'}
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        Call
+                      </Button>
                     </div>
                   </div>
                 </div>
 
                 {/* Team Member 2 - Chantal */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/team/chantal.jpg" alt="Mugenyi Olga Chantal" />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/team/chantal.jpg" alt="Mugenyi Olga Chantal" className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-white font-bold text-xl">
                       M
                     </AvatarFallback>
@@ -152,8 +161,8 @@ const ContactUs = () => {
 
                 {/* Team Member 3 - Martha */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/team/martha.jpg" alt="Martha Praise Katusiime" />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/team/martha.jpg" alt="Martha Praise Katusiime" className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-green-400 to-blue-500 text-white font-bold text-xl">
                       M
                     </AvatarFallback>
@@ -186,8 +195,8 @@ const ContactUs = () => {
 
                 {/* Team Member 4 - Richard */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/team/richard.jpg" alt="Magezi Richard Elijah" />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/team/richard.jpg" alt="Magezi Richard Elijah" className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white font-bold text-xl">
                       M
                     </AvatarFallback>
@@ -220,8 +229,8 @@ const ContactUs = () => {
 
                 {/* Team Member 5 - Andrea */}
                 <div className="flex items-center gap-4 p-6 bg-gray-700/50 rounded-xl border border-cyan-800/20">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/team/andrea.jpg" alt="Nabuuma Andrea Heartily" />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src="/team/andrea.jpg" alt="Nabuuma Andrea Heartily" className="object-cover" />
                     <AvatarFallback className="bg-gradient-to-br from-purple-400 to-pink-500 text-white font-bold text-xl">
                       N
                     </AvatarFallback>
