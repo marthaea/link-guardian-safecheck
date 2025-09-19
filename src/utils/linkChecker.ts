@@ -19,48 +19,35 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     
     console.log("🛡️ Starting TRIPLE-LAYER SECURITY ANALYSIS for:", input);
     
-    // Determine the type properly
-    const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
-    
-    // Extract domain
-    let domain = '';
-    let normalizedInput = input;
-    try {
-      if (inputType === 'email') {
-        domain = input.split('@')[1].toLowerCase();
-      } else {
-        let urlInput = input.trim().toLowerCase();
-        urlInput = urlInput.replace(/\/+$/, '');
-        normalizedInput = urlInput;
-        
-        if (!urlInput.startsWith('http')) {
-          urlInput = `http://${urlInput}`;
-        }
-        domain = new URL(urlInput).hostname.toLowerCase();
-      }
-    } catch (e) {
-      domain = 'unknown';
+    // Use Supabase Edge Function for proper API calls
+    const { data, error } = await supabase.functions.invoke('check-link', {
+      body: { input, userId: 'anonymous' }
+    });
+
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error("Analysis service unavailable");
     }
 
-    // Perform triple analysis in parallel
-    const [ipqsResult, vtResult, heuristicResult] = await Promise.allSettled([
-      performIPQSAnalysis(normalizedInput),
-      performVirusTotalAnalysis(domain),
-      Promise.resolve(getSuspicionScore(input))
-    ]);
+    console.log("✅ Edge function response:", data);
 
-    // Extract results
-    const ipqsData = ipqsResult.status === 'fulfilled' ? ipqsResult.value : null;
-    const vtData = vtResult.status === 'fulfilled' ? vtResult.value : null;
-    const heuristicData = heuristicResult.status === 'fulfilled' ? heuristicResult.value : null;
-
-    console.log("✅ TRIPLE ANALYSIS COMPLETE:");
-    console.log("📊 IPQS Result:", ipqsData);
-    console.log("🦠 VirusTotal Result:", vtData);
-    console.log("🧠 Heuristic Result:", heuristicData);
-
-    // Combine all analysis results
-    const scanResult = combineTripleAnalysis(input, inputType, domain, ipqsData, vtData, heuristicData);
+    // Convert edge function response to ScanResult format
+    const scanResult: ScanResult = {
+      url: data.url || input,
+      isSafe: data.isSafe || false,
+      type: data.type || (input.includes('@') ? 'email' : 'link'),
+      threatDetails: formatEdgeFunctionDetails(data),
+      warningLevel: data.warningLevel || 'warning',
+      timestamp: new Date(data.timestamp) || new Date(),
+      riskScore: data.riskScore || 50,
+      phishing: data.phishing || false,
+      suspicious: data.suspicious || false,
+      spamming: data.spamming || false,
+      domainAge: data.domainAge || 'Unknown',
+      country: data.country || 'Unknown',
+      heuristicScore: data.heuristicAnalysis?.score || 0,
+      heuristicRiskLevel: data.heuristicAnalysis?.riskLevel || 'medium',
+    };
     
     // Cache the result for consistent future checks
     linkCache.set(input, scanResult);
@@ -72,18 +59,21 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
   } catch (error) {
     console.error("Link checker error:", error);
     
-    // Fall back to heuristic analysis only when everything fails
+    // Fall back to enhanced heuristic analysis only when edge function fails
     const heuristicAnalysis = getSuspicionScore(input);
     const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
     
+    // Make fallback more strict - don't trust unknown links
+    const adjustedSafety = heuristicAnalysis.riskLevel === 'low' && heuristicAnalysis.score < 20;
+    
     const fallbackResult: ScanResult = {
       url: input,
-      isSafe: heuristicAnalysis.riskLevel === 'low',
+      isSafe: adjustedSafety,
       type: inputType,
-      threatDetails: `⚠️ Error during analysis. Fallback to heuristics only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}`,
-      warningLevel: heuristicAnalysis.riskLevel === 'low' ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
+      threatDetails: `⚠️ Analysis service unavailable. Using enhanced heuristic analysis only.\n\n${formatHeuristicOnlyDetails(heuristicAnalysis)}\n\n⚠️ CAUTION: Without external API verification, exercise extra caution with this link.`,
+      warningLevel: adjustedSafety ? 'safe' : heuristicAnalysis.riskLevel === 'medium' ? 'warning' : 'danger',
       timestamp: new Date(),
-      riskScore: heuristicAnalysis.score,
+      riskScore: Math.min(100, heuristicAnalysis.score + 20), // Add penalty for no API verification
       heuristicScore: heuristicAnalysis.score,
       heuristicRiskLevel: heuristicAnalysis.riskLevel,
     };
@@ -95,165 +85,94 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
   }
 };
 
-// Frontend IPQS Analysis using your API key
-async function performIPQSAnalysis(input: string) {
-  try {
-    console.log("🔍 Starting IPQS analysis...");
-    
-    const IPQS_API_KEY = "019808ba-01c4-7508-80c2-b3f2dc686cc6";
-    const apiUrl = `https://ipqualityscore.com/api/json/url/${IPQS_API_KEY}/${encodeURIComponent(input)}?strictness=2&fast=true`;
-    
-    // Use a proxy service for CORS
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-    
-    const response = await fetch(proxyUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (response.ok) {
-      const proxyData = await response.json();
-      const ipqsData = JSON.parse(proxyData.contents);
-      
-      if (ipqsData.success !== false) {
-        console.log("✅ IPQS API SUCCESS:", ipqsData);
-        return {
-          service: 'IPQS',
-          risk_score: ipqsData.risk_score || 0,
-          unsafe: ipqsData.unsafe || false,
-          phishing: ipqsData.phishing || false,
-          suspicious: ipqsData.suspicious || false,
-          spamming: ipqsData.spamming || false,
-          domain_age: ipqsData.domain_age,
-          country_code: ipqsData.country_code,
-          success: true
-        };
-      }
+// Format edge function response for display
+function formatEdgeFunctionDetails(data: any): string {
+  let details = [];
+  
+  details.push('🛡️ COMPREHENSIVE SECURITY ANALYSIS COMPLETE');
+  details.push('');
+  
+  // IPQS Analysis
+  if (data.ipqsAnalysis) {
+    details.push('🔍 IPQS Security Analysis:');
+    const riskScore = data.ipqsAnalysis.risk_score || 0;
+    if (riskScore > 70) {
+      details.push('   ⚠️ HIGH RISK: Significant security concerns detected');
+    } else if (riskScore > 30) {
+      details.push('   ⚠️ MODERATE RISK: Some security concerns detected');
+    } else {
+      details.push('   ✅ LOW RISK: Minimal security concerns');
     }
-    
-    throw new Error("IPQS API call failed");
-  } catch (error) {
-    console.log("⚠️ IPQS API failed, using simulation:", error.message);
-    return simulateIPQSAnalysis(input);
-  }
-}
-
-// Simulate IPQS when API fails
-function simulateIPQSAnalysis(input: string) {
-  const hash = input.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  
-  const scenarios = [
-    {
-      service: 'IPQS (simulated)',
-      risk_score: 15,
-      unsafe: false,
-      phishing: false,
-      suspicious: false,
-      spamming: false,
-      domain_age: 365 * 3,
-      country_code: 'US',
-      success: true
-    },
-    {
-      service: 'IPQS (simulated)',
-      risk_score: 85,
-      unsafe: true,
-      phishing: true,
-      suspicious: true,
-      spamming: false,
-      domain_age: 30,
-      country_code: 'RU',
-      success: true
-    }
-  ];
-  
-  return scenarios[hash % scenarios.length];
-}
-
-// VirusTotal Analysis (Enhanced simulation)
-async function performVirusTotalAnalysis(domain: string) {
-  console.log("🦠 Starting VirusTotal analysis...");
-  
-  // Enhanced simulation based on domain reputation
-  const hash = domain.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  
-  let scenario;
-  if (domain.includes('google') || domain.includes('microsoft') || domain.includes('apple') || domain.includes('github')) {
-    scenario = { positives: 0, total: 73, detected: false };
-  } else if (domain.length < 6 || domain.includes('bit.ly') || domain.includes('tinyurl')) {
-    scenario = { positives: Math.floor(hash % 15) + 5, total: 73, detected: true };
+    details.push(`   • Risk Score: ${riskScore}/100`);
+    if (data.phishing) details.push('   • ⚠️ Phishing activity detected');
+    if (data.suspicious) details.push('   • ⚠️ Suspicious behavior patterns');
+    if (data.spamming) details.push('   • ⚠️ Spam activity detected');
   } else {
-    const scenarios = [
-      { positives: 0, total: 73, detected: false },
-      { positives: 2, total: 73, detected: true },
-      { positives: 8, total: 73, detected: true }
-    ];
-    scenario = scenarios[hash % scenarios.length];
+    details.push('🔍 IPQS Security Analysis: Service unavailable');
   }
   
-  return {
-    service: 'VirusTotal',
-    ...scenario,
-    scan_date: new Date().toISOString(),
-    permalink: `https://virustotal.com/url/${hash}`
-  };
-}
-
-// Combine all three analysis results
-function combineTripleAnalysis(input: string, type: 'link' | 'email', domain: string, ipqsData: any, vtData: any, heuristicData: any): ScanResult {
-  // Calculate combined risk from all three sources
-  let overallRisk = 0;
+  details.push('');
   
-  // IPQS contribution (40% weight)
-  if (ipqsData?.success) {
-    const ipqsRisk = ipqsData.risk_score || 0;
-    overallRisk += ipqsRisk * 0.4;
+  // VirusTotal Analysis
+  if (data.virusTotalAnalysis) {
+    details.push('🦠 VirusTotal Security Analysis:');
+    if (data.virusTotalAnalysis.detected) {
+      details.push(`   ⚠️ THREATS DETECTED: ${data.virusTotalAnalysis.positives}/${data.virusTotalAnalysis.total} security engines flagged this URL`);
+    } else {
+      details.push(`   ✅ CLEAN: 0/${data.virusTotalAnalysis.total} security engines detected threats`);
+    }
+  } else {
+    details.push('🦠 VirusTotal Security Analysis: Service unavailable');
   }
   
-  // VirusTotal contribution (35% weight)
-  if (vtData?.detected) {
-    const vtRisk = (vtData.positives / vtData.total) * 100;
-    overallRisk += vtRisk * 0.35;
+  details.push('');
+  
+  // Heuristic Analysis
+  if (data.heuristicAnalysis) {
+    details.push('🧠 Enhanced Heuristic Analysis:');
+    details.push(`   • Suspicion Score: ${data.heuristicAnalysis.score}/100`);
+    details.push(`   • Risk Assessment: ${data.heuristicAnalysis.riskLevel.toUpperCase()}`);
+    
+    if (data.heuristicAnalysis.factors && data.heuristicAnalysis.factors.length > 0) {
+      details.push('   • Security Patterns Detected:');
+      data.heuristicAnalysis.factors.forEach((factor: string) => {
+        details.push(`     - ${factor}`);
+      });
+    } else {
+      details.push('   • No suspicious patterns detected');
+    }
   }
   
-  // Heuristic contribution (25% weight)
-  if (heuristicData) {
-    overallRisk += heuristicData.score * 0.25;
+  details.push('');
+  
+  // Domain Information
+  details.push('🌍 Domain Information:');
+  if (data.domainAge) {
+    details.push(`   📅 Domain Age: ${data.domainAge}`);
+  }
+  if (data.country) {
+    details.push(`   🌍 Country: ${data.country}`);
   }
   
-  // Determine overall safety
-  const isSafe = overallRisk < 40 && !ipqsData?.phishing && !vtData?.detected;
-  const warningLevel = overallRisk > 70 ? 'danger' : overallRisk > 40 ? 'warning' : 'safe';
-
-  return {
-    url: input,
-    isSafe,
-    type,
-    threatDetails: formatTripleAnalysisDetails({
-      ipqsAnalysis: ipqsData,
-      virusTotalAnalysis: vtData,
-      heuristicAnalysis: heuristicData,
-      riskScore: Math.round(overallRisk),
-      phishing: ipqsData?.phishing || false,
-      suspicious: ipqsData?.suspicious || vtData?.detected || false,
-      spamming: ipqsData?.spamming || false,
-      domainAge: ipqsData?.domain_age ? `${ipqsData.domain_age} days` : 'Unknown',
-      country: ipqsData?.country_code || 'Unknown',
-      isSafe
-    }),
-    warningLevel,
-    timestamp: new Date(),
-    riskScore: Math.round(overallRisk),
-    phishing: ipqsData?.phishing || false,
-    suspicious: ipqsData?.suspicious || vtData?.detected || false,
-    spamming: ipqsData?.spamming || false,
-    domainAge: ipqsData?.domain_age ? `${ipqsData.domain_age} days` : 'Unknown',
-    country: ipqsData?.country_code || 'Unknown',
-    heuristicScore: heuristicData?.score || 0,
-    heuristicRiskLevel: heuristicData?.riskLevel || 'low',
-  };
+  details.push('');
+  
+  // Combined Assessment
+  details.push('📊 Final Security Assessment:');
+  details.push(`   • Combined Risk Score: ${data.riskScore}/100`);
+  details.push(`   • Security Status: ${data.isSafe ? 'SAFE' : 'POTENTIALLY UNSAFE'}`);
+  details.push('   • Analysis Sources: IPQS + VirusTotal + Enhanced Heuristics');
+  
+  details.push('');
+  details.push('💡 Recommendation:');
+  if (data.warningLevel === 'safe') {
+    details.push('   This link appears safe based on comprehensive analysis.');
+  } else if (data.warningLevel === 'warning') {
+    details.push('   ⚠️ Exercise caution. Verify source and avoid sensitive information.');
+  } else {
+    details.push('   🚨 AVOID this link. High security risk detected.');
+  }
+  
+  return details.join('\n');
 }
 
 // Format triple analysis results when API succeeds

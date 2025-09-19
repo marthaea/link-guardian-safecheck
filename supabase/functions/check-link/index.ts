@@ -106,30 +106,84 @@ function analyzeHeuristics(url: string, domain: string) {
   let score = 0
   const factors = []
   
-  // URL shorteners
-  if (/(bit\.ly|tinyurl|t\.co)/i.test(url)) {
-    score += 25
+  // Enhanced cybersecurity analysis
+  
+  // URL shorteners (High Risk)
+  if (/(bit\.ly|tinyurl|t\.co|ow\.ly|is\.gd|buff\.ly|adf\.ly|short\.link)/i.test(url)) {
+    score += 30
     factors.push('URL shortener detected')
   }
   
-  // Suspicious extensions
-  if (/\.(tk|ml|ga|cf|top)/i.test(url)) {
-    score += 20
+  // Suspicious domain extensions (High Risk)
+  if (/\.(tk|ml|ga|cf|top|xyz|bid|loan|win|club|site|date|click|download)/i.test(url)) {
+    score += 25
     factors.push('Suspicious domain extension')
   }
   
-  // Long URLs
+  // IP address instead of domain (Very High Risk)
+  if (/^https?:\/\/(?:\d{1,3}\.){3}\d{1,3}/.test(url)) {
+    score += 40
+    factors.push('IP address used instead of domain')
+  }
+  
+  // Long URLs (Medium Risk)
   if (url.length > 200) {
-    score += 15
+    score += 20
     factors.push('Very long URL')
+  } else if (url.length > 100) {
+    score += 10
+    factors.push('Long URL detected')
   }
   
-  // Safe domains
-  if (['google.com', 'microsoft.com', 'lovable.dev'].some(safe => url.includes(safe))) {
-    score = Math.max(0, score - 30)
+  // Suspicious keywords (High Risk)
+  const suspiciousKeywords = ['secure', 'update', 'verify', 'confirm', 'account', 'login', 'banking', 'urgent', 'suspended', 'expired', 'winner', 'prize', 'free', 'gift']
+  const foundKeywords = suspiciousKeywords.filter(keyword => url.toLowerCase().includes(keyword))
+  if (foundKeywords.length > 0) {
+    score += foundKeywords.length * 12
+    factors.push(`Suspicious keywords: ${foundKeywords.join(', ')}`)
   }
   
-  const riskLevel = score > 60 ? 'high' : score > 30 ? 'medium' : 'low'
+  // Typosquatting detection (Very High Risk)
+  const popularSites = ['google', 'facebook', 'amazon', 'paypal', 'microsoft', 'apple', 'twitter']
+  for (const site of popularSites) {
+    const variations = [site.replace('o', '0'), site.replace('l', '1'), site + '1']
+    for (const variation of variations) {
+      if (url.toLowerCase().includes(variation) && !url.toLowerCase().includes(site)) {
+        score += 35
+        factors.push(`Potential typosquatting of ${site}`)
+        break
+      }
+    }
+  }
+  
+  // Excessive subdomains (Medium Risk)
+  const domainParts = domain.split('.')
+  if (domainParts.length > 4) {
+    score += 15
+    factors.push('Excessive subdomains')
+  }
+  
+  // URL encoding (Medium Risk)
+  if (/%[0-9a-f]{2}/i.test(url)) {
+    score += 18
+    factors.push('URL encoded characters')
+  }
+  
+  // Non-HTTPS (Medium Risk)
+  if (url.startsWith('http://') && !url.includes('localhost')) {
+    score += 15
+    factors.push('Non-secure HTTP protocol')
+  }
+  
+  // Safe domains (reduce score)
+  const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'github.com', 'stackoverflow.com']
+  if (safeDomains.some(safe => url.includes(safe))) {
+    score = Math.max(0, score - 25)
+    factors.push('Recognized safe domain')
+  }
+  
+  // More strict risk levels
+  const riskLevel = score > 50 ? 'high' : score > 25 ? 'medium' : 'low'
   
   return { score, riskLevel, factors }
 }
@@ -150,12 +204,27 @@ function combineAnalysis(input: string, type: string, ipqs: any, vt: any, heuris
   // Heuristic weight: 20%
   riskScore += heuristic.score * 0.2
   
-  const isSafe = riskScore < 40 && !ipqs?.phishing && !vt?.detected
-  const warningLevel = riskScore > 70 ? 'danger' : riskScore > 40 ? 'warning' : 'safe'
+  // More strict safety determination
+  const ipqsRisky = ipqs?.risk_score > 40 || ipqs?.phishing || ipqs?.suspicious;
+  const vtRisky = vt?.detected;
+  const heuristicRisky = heuristic.riskLevel !== 'low';
+  
+  // If any system flags as risky, mark as unsafe
+  const overallSafe = !ipqsRisky && !vtRisky && !heuristicRisky && riskScore < 35;
+  
+  // Determine warning level with stricter thresholds
+  let warningLevel = 'safe';
+  if (overallSafe && riskScore < 25) {
+    warningLevel = 'safe';
+  } else if (riskScore >= 60 || ipqs?.phishing || heuristic.riskLevel === 'high' || (vt?.positives > 5)) {
+    warningLevel = 'danger';
+  } else {
+    warningLevel = 'warning';
+  }
   
   return {
     url: input,
-    isSafe,
+    isSafe: overallSafe,
     type,
     warningLevel,
     timestamp: new Date(),

@@ -63,11 +63,60 @@ export const getSuspicionScore = (url: string) => {
   }
   
   // Check for suspicious keywords (High Risk)
-  const suspiciousKeywords = ['secure', 'update', 'verify', 'confirm', 'account', 'login', 'banking', 'paypal', 'amazon', 'microsoft', 'google', 'apple', 'urgent', 'suspended', 'expired'];
+  const suspiciousKeywords = ['secure', 'update', 'verify', 'confirm', 'account', 'login', 'banking', 'paypal', 'amazon', 'microsoft', 'google', 'apple', 'urgent', 'suspended', 'expired', 'winner', 'prize', 'lottery', 'inheritance', 'tax', 'refund', 'discount', 'offer', 'free', 'gift', 'reward', 'congratulations'];
   const foundKeywords = suspiciousKeywords.filter(keyword => normalizedUrl.includes(keyword));
   if (foundKeywords.length > 0) {
-    score += foundKeywords.length * 8;
+    score += foundKeywords.length * 10;
     factors.push(`Suspicious keywords found: ${foundKeywords.join(', ')}`);
+  }
+  
+  // Check for typosquatting patterns (Very High Risk)
+  const popularSites = ['google', 'facebook', 'amazon', 'paypal', 'microsoft', 'apple', 'twitter', 'instagram', 'linkedin', 'netflix', 'spotify', 'github'];
+  for (const site of popularSites) {
+    const variations = [
+      site.replace('o', '0'), // o to 0
+      site.replace('l', '1'), // l to 1  
+      site.replace('i', '1'), // i to 1
+      site + '1', site + '2', // adding numbers
+      site.replace('e', '3'), // e to 3
+      site.replace('a', '@'), // a to @
+    ];
+    
+    for (const variation of variations) {
+      if (normalizedUrl.includes(variation) && !normalizedUrl.includes(site)) {
+        score += 40;
+        factors.push(`Potential typosquatting of ${site} detected`);
+        break;
+      }
+    }
+  }
+  
+  // Check for suspicious file extensions (High Risk)
+  if (/\.(exe|scr|bat|cmd|com|pif|vbs|js|jar|zip|rar)($|\?|#)/i.test(url)) {
+    score += 30;
+    factors.push('Suspicious file extension detected');
+  }
+  
+  // Check for base64 encoded content (Medium Risk)
+  if (/base64|data:/.test(url)) {
+    score += 20;
+    factors.push('Base64 encoded content detected');
+  }
+  
+  // Check for social engineering indicators (High Risk)
+  const socialEngineeringTerms = ['click here', 'act now', 'limited time', 'expires today', 'claim now', 'download now', 'install now'];
+  const foundSocialTerms = socialEngineeringTerms.filter(term => normalizedUrl.includes(term.replace(' ', '')));
+  if (foundSocialTerms.length > 0) {
+    score += 25;
+    factors.push('Social engineering patterns detected');
+  }
+  
+  // Check for cryptocurrency/financial scam indicators (Very High Risk)
+  const cryptoScamTerms = ['bitcoin', 'crypto', 'invest', 'profit', 'trading', 'forex', 'doubler', 'multiplier'];
+  const foundCryptoTerms = cryptoScamTerms.filter(term => normalizedUrl.includes(term));
+  if (foundCryptoTerms.length > 0) {
+    score += foundCryptoTerms.length * 15;
+    factors.push('Potential cryptocurrency/financial scam indicators');
   }
   
   // Check for homograph attacks (look-alike characters)
@@ -94,21 +143,42 @@ export const getSuspicionScore = (url: string) => {
     factors.push('Potential redirect mechanism detected');
   }
   
-  // Bonus points for well-known safe domains
-  const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'github.com', 'stackoverflow.com', 'wikipedia.org'];
-  const isSafeDomain = safeDomains.some(domain => normalizedUrl.includes(domain));
+  // Bonus points for well-known safe domains (but be strict about exact matches)
+  const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'github.com', 'stackoverflow.com', 'wikipedia.org', 'youtube.com', 'gmail.com'];
+  const domainOnly = domainSection.replace(/^www\./, '');
+  const isSafeDomain = safeDomains.includes(domainOnly);
   if (isSafeDomain) {
-    score = Math.max(0, score - 20);
-    factors.push('Recognized safe domain');
+    score = Math.max(0, score - 25);
+    factors.push('Verified safe domain');
+  }
+  
+  // Additional security checks for modern threats
+  
+  // Check for internationalized domain names (IDN) that might be spoofed
+  if (/xn--/.test(url)) {
+    score += 20;
+    factors.push('Internationalized domain name detected (potential spoofing risk)');
+  }
+  
+  // Check for suspicious port numbers
+  if (/:(?!80|443|8080)\d+/.test(url)) {
+    score += 15;
+    factors.push('Non-standard port number detected');
+  }
+  
+  // Check for data URIs (high risk for XSS)
+  if (/^data:/.test(url)) {
+    score += 35;
+    factors.push('Data URI detected (potential XSS risk)');
   }
   
   // Normalize the score between 0 and 100
   score = Math.max(0, Math.min(100, score));
   
   let riskLevel: 'low' | 'medium' | 'high' = 'low';
-  if (score >= 60) {
+  if (score >= 50) { // Lowered threshold for high risk
     riskLevel = 'high';
-  } else if (score >= 30) {
+  } else if (score >= 25) { // Lowered threshold for medium risk
     riskLevel = 'medium';
   }
   
