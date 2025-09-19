@@ -59,8 +59,8 @@ serve(async (req) => {
     // 2. VirusTotal Simulation
     const vtResult = simulateVirusTotal(domain)
     
-    // 3. Heuristic Analysis
-    const heuristicResult = analyzeHeuristics(input, domain)
+    // 3. API-Aware Heuristic Analysis
+    const heuristicResult = analyzeHeuristics(input, domain, ipqsResult, vtResult)
     
     // Combine results
     const combinedResult = combineAnalysis(input, type, ipqsResult, vtResult, heuristicResult)
@@ -102,9 +102,43 @@ function simulateVirusTotal(domain: string) {
   return scenarios[hash % scenarios.length]
 }
 
-function analyzeHeuristics(url: string, domain: string) {
+function analyzeHeuristics(url: string, domain: string, ipqsResult: any = null, vtResult: any = null) {
   let score = 0
   const factors = []
+  
+  // If external APIs detected threats, heavily weight the heuristic analysis
+  if (ipqsResult) {
+    if (ipqsResult.phishing) {
+      score += 50
+      factors.push('External API confirmed phishing activity')
+    }
+    if (ipqsResult.suspicious) {
+      score += 35
+      factors.push('External API flagged as suspicious')
+    }
+    if (ipqsResult.spamming) {
+      score += 30
+      factors.push('External API detected spam activity')
+    }
+    if (ipqsResult.risk_score > 70) {
+      score += 40
+      factors.push(`High external risk score: ${ipqsResult.risk_score}/100`)
+    } else if (ipqsResult.risk_score > 40) {
+      score += 25
+      factors.push(`Moderate external risk score: ${ipqsResult.risk_score}/100`)
+    }
+  }
+  
+  if (vtResult && vtResult.detected) {
+    const threatRatio = vtResult.positives / vtResult.total
+    if (threatRatio > 0.1) { // More than 10% of engines detected threats
+      score += 45
+      factors.push(`Multiple security engines flagged: ${vtResult.positives}/${vtResult.total}`)
+    } else if (threatRatio > 0.05) {
+      score += 25
+      factors.push(`Some security engines flagged: ${vtResult.positives}/${vtResult.total}`)
+    }
+  }
   
   // Enhanced cybersecurity analysis
   
@@ -175,15 +209,28 @@ function analyzeHeuristics(url: string, domain: string) {
     factors.push('Non-secure HTTP protocol')
   }
   
-  // Safe domains (reduce score)
+  // Safe domains (reduce score only if no external API threats)
   const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'github.com', 'stackoverflow.com']
   if (safeDomains.some(safe => url.includes(safe))) {
-    score = Math.max(0, score - 25)
-    factors.push('Recognized safe domain')
+    // Only reduce score if external APIs don't flag it as dangerous
+    const externalThreat = (ipqsResult?.phishing || ipqsResult?.suspicious || vtResult?.detected)
+    if (!externalThreat) {
+      score = Math.max(0, score - 25)
+      factors.push('Recognized safe domain')
+    } else {
+      factors.push('Safe domain but flagged by external security APIs')
+    }
   }
   
-  // More strict risk levels
-  const riskLevel = score > 50 ? 'high' : score > 25 ? 'medium' : 'low'
+  // API-aware risk levels - stricter when APIs are available
+  let riskLevel = 'low'
+  if (ipqsResult || vtResult) {
+    // When APIs are available, be more sensitive to their results
+    riskLevel = score > 40 ? 'high' : score > 20 ? 'medium' : 'low'
+  } else {
+    // Traditional thresholds when offline
+    riskLevel = score > 50 ? 'high' : score > 25 ? 'medium' : 'low'
+  }
   
   return { score, riskLevel, factors }
 }
@@ -209,8 +256,8 @@ function combineAnalysis(input: string, type: string, ipqs: any, vt: any, heuris
   const vtRisky = vt?.detected;
   const heuristicRisky = heuristic.riskLevel !== 'low';
   
-  // If any system flags as risky, mark as unsafe
-  const overallSafe = !ipqsRisky && !vtRisky && !heuristicRisky && riskScore < 35;
+  // If any system flags as risky, mark as unsafe - be more conservative with API results
+  const overallSafe = !ipqsRisky && !vtRisky && !heuristicRisky && riskScore < 30;
   
   // Determine warning level with stricter thresholds
   let warningLevel = 'safe';

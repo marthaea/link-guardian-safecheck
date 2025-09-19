@@ -60,7 +60,7 @@ export const checkLink = async (input: string): Promise<ScanResult> => {
     console.error("Link checker error:", error);
     
     // Fall back to enhanced heuristic analysis only when edge function fails
-    const heuristicAnalysis = getSuspicionScore(input);
+    const heuristicAnalysis = getSuspicionScore(input, null);
     const inputType: 'link' | 'email' = input.includes('@') ? 'email' : 'link';
     
     // Make fallback more strict - don't trust unknown links

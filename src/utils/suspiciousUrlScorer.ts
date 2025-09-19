@@ -1,6 +1,41 @@
-export const getSuspicionScore = (url: string) => {
+export const getSuspicionScore = (url: string, apiResults: any = null) => {
   let score = 0;
   let factors: string[] = [];
+  
+  // If we have API results that indicate threats, heavily weight them in heuristic analysis
+  if (apiResults) {
+    if (apiResults.phishing) {
+      score += 50;
+      factors.push('External security API confirmed phishing activity');
+    }
+    if (apiResults.suspicious) {
+      score += 35;
+      factors.push('External security API flagged as suspicious behavior');
+    }
+    if (apiResults.spamming) {
+      score += 30;
+      factors.push('External security API detected spam activity');
+    }
+    if (apiResults.risk_score > 70) {
+      score += 40;
+      factors.push(`High external risk assessment: ${apiResults.risk_score}/100`);
+    } else if (apiResults.risk_score > 40) {
+      score += 25;
+      factors.push(`Moderate external risk assessment: ${apiResults.risk_score}/100`);
+    }
+    
+    // If virus total detected threats
+    if (apiResults.virusTotalAnalysis?.detected) {
+      const threatRatio = apiResults.virusTotalAnalysis.positives / apiResults.virusTotalAnalysis.total;
+      if (threatRatio > 0.1) {
+        score += 45;
+        factors.push(`Multiple security engines flagged: ${apiResults.virusTotalAnalysis.positives}/${apiResults.virusTotalAnalysis.total}`);
+      } else if (threatRatio > 0.05) {
+        score += 25;
+        factors.push(`Some security engines flagged: ${apiResults.virusTotalAnalysis.positives}/${apiResults.virusTotalAnalysis.total}`);
+      }
+    }
+  }
   
   // Normalize URL for analysis
   const normalizedUrl = url.toLowerCase();
@@ -143,13 +178,19 @@ export const getSuspicionScore = (url: string) => {
     factors.push('Potential redirect mechanism detected');
   }
   
-  // Bonus points for well-known safe domains (but be strict about exact matches)
+  // Bonus points for well-known safe domains (but be strict about exact matches and API results)
   const safeDomains = ['google.com', 'microsoft.com', 'apple.com', 'amazon.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'github.com', 'stackoverflow.com', 'wikipedia.org', 'youtube.com', 'gmail.com'];
   const domainOnly = domainSection.replace(/^www\./, '');
   const isSafeDomain = safeDomains.includes(domainOnly);
   if (isSafeDomain) {
-    score = Math.max(0, score - 25);
-    factors.push('Verified safe domain');
+    // Only reduce score if external APIs don't flag it as dangerous
+    const externalThreat = apiResults && (apiResults.phishing || apiResults.suspicious || apiResults.risk_score > 40);
+    if (!externalThreat) {
+      score = Math.max(0, score - 25);
+      factors.push('Verified safe domain');
+    } else {
+      factors.push('Safe domain but flagged by external security APIs');
+    }
   }
   
   // Additional security checks for modern threats
@@ -175,20 +216,42 @@ export const getSuspicionScore = (url: string) => {
   // Normalize the score between 0 and 100
   score = Math.max(0, Math.min(100, score));
   
+  // API-aware risk level determination
   let riskLevel: 'low' | 'medium' | 'high' = 'low';
-  if (score >= 50) { // Lowered threshold for high risk
-    riskLevel = 'high';
-  } else if (score >= 25) { // Lowered threshold for medium risk
-    riskLevel = 'medium';
+  if (apiResults) {
+    // When APIs are available, be more sensitive to their results
+    if (score >= 40) {
+      riskLevel = 'high';
+    } else if (score >= 20) {
+      riskLevel = 'medium';
+    }
+  } else {
+    // Traditional independent analysis thresholds when offline
+    if (score >= 50) {
+      riskLevel = 'high';
+    } else if (score >= 25) {
+      riskLevel = 'medium';
+    }
   }
   
+  // Generate explanation with API context
   let explanation = '';
-  if (riskLevel === 'high') {
-    explanation = 'This link has multiple characteristics commonly associated with malicious content. Exercise extreme caution and avoid clicking.';
-  } else if (riskLevel === 'medium') {
-    explanation = 'This link has some suspicious characteristics. Be cautious, verify the source, and avoid entering sensitive information.';
+  if (apiResults && (apiResults.phishing || apiResults.suspicious || apiResults.risk_score > 40)) {
+    if (riskLevel === 'high') {
+      explanation = '🚨 DANGER: External security APIs have flagged this link as dangerous. Do not click or share.';
+    } else if (riskLevel === 'medium') {
+      explanation = '⚠️ WARNING: External security APIs detected concerning patterns. Exercise extreme caution.';
+    } else {
+      explanation = '⚠️ CAUTION: While heuristics suggest lower risk, external APIs detected some issues. Verify carefully.';
+    }
   } else {
-    explanation = 'This link appears to have low risk based on our analysis, but always exercise caution when visiting unfamiliar websites.';
+    if (riskLevel === 'high') {
+      explanation = '🚨 This link shows multiple high-risk patterns. Avoid clicking and verify with sender through another channel.';
+    } else if (riskLevel === 'medium') {
+      explanation = '⚠️ This link has some suspicious characteristics. Exercise caution and verify its legitimacy before clicking.';
+    } else {
+      explanation = '✅ This link appears relatively safe based on available analysis, but always remain vigilant online.';
+    }
   }
   
   return {
